@@ -20,6 +20,7 @@ def parse_args():
         "-P", "--port", help="port number", type=int, default=4455
     )
     parser.add_argument("-p", "--password", help="password")
+    parser.add_argument("-j", "--json", action="store_true", default=False)
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -185,11 +186,17 @@ def main():
             if args.action == "list":
                 # print(*get_items(cl, args.scene), sep="\n")
                 scene = args.scene or get_current_scene_name(cl)
+
+                data = get_items(cl, args.scene)
+                if args.json:
+                    print_json(data=data)
+                    return
+
                 table = Table(title=f"Items in scene '{scene}'")
                 table.add_column("ID")
                 table.add_column("Name")
                 table.add_column("Enabled", justify="center")
-                for item in get_items(cl, args.scene):
+                for item in data:
                     item_id = str(item.get("sceneItemId"))
                     name = item.get("sourceName")
                     enabled = "✅" if item.get("sceneItemEnabled") else "❌"
@@ -203,10 +210,15 @@ def main():
                 hide_item(cl, args.ITEM, args.scene)
         elif cmd == "input":
             if args.action == "list":
+                data = get_inputs(cl)
+                if args.json:
+                    print_json(data=data)
+                    return
+
                 table = Table(title="Inputs")
                 table.add_column("Kind")
                 table.add_column("Name")
-                for input in get_inputs(cl):
+                for input in data:
                     kind = input.get("inputKind")
                     name = input.get("inputName")
                     table.add_row(kind, name)
@@ -216,6 +228,7 @@ def main():
                 if args.PROPERTY:
                     print(data.get(args.PROPERTY))
                 else:
+                    # TODO Implement rich table output
                     print_json(data=data)
             elif args.action == "set":
                 if not args.INPUT or not args.PROPERTY or not args.VALUE:
