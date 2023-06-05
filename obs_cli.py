@@ -306,7 +306,7 @@ def main():
             elif args.action == "status":
                 res = is_filter_enabled(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
-                print("enable" if res else "disabled")
+                print("enabled" if res else "disabled")
 
         return 0
     except Exception:
