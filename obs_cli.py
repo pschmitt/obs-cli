@@ -16,6 +16,7 @@ from rich.table import Table
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-D", "--debug", action="store_true", default=False)
+    parser.add_argument("-q", "--quiet", action="store_true", default=False)
     parser.add_argument("-H", "--host", help="host name", default="localhost")
     parser.add_argument(
         "-P", "--port", help="port number", type=int, default=4455
@@ -323,6 +324,8 @@ def main():
             elif args.action == "status":
                 res = is_filter_enabled(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
                 print("enabled" if res else "disabled")
         elif cmd == "hotkey":
             if args.action == "list":
