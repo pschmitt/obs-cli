@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "obs-cli"
+authors = [
+  {name = "Philipp Schmitt", email = "philipp@schmitt.co"},
+]
+description = "OBS CLI"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["obs", "obs-studio"]
+license = {file = "LICENSE"}
+classifiers = [
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "obsws-python",
+  "rich"
+]
+version = "0.1"
+
+[tool.black]
+line-length = 79
+
+[project.scripts]
+obs-cli = "obs_cli:main"
