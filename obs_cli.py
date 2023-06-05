@@ -180,8 +180,10 @@ def main():
                 print(
                     *sorted([x.get("sceneName") for x in res.scenes]), sep="\n"
                 )
+                LOGGER.debug(res)
             elif args.action == "switch":
-                switch_to_scene(cl, args.SCENE, exact=False)
+                res = switch_to_scene(cl, args.SCENE, exact=False)
+                LOGGER.debug(res)
             else:
                 print(get_current_scene_name(cl))
 
@@ -206,11 +208,15 @@ def main():
                     table.add_row(item_id, name, enabled)
                 console.print(table)
             elif args.action == "toggle":
-                toggle_item(cl, args.ITEM, args.scene)
+                res = toggle_item(cl, args.ITEM, args.scene)
+                LOGGER.debug(res)
             elif args.action == "show":
-                show_item(cl, args.ITEM, args.scene)
+                res = show_item(cl, args.ITEM, args.scene)
+                LOGGER.debug(res)
             elif args.action == "hide":
-                hide_item(cl, args.ITEM, args.scene)
+                res = hide_item(cl, args.ITEM, args.scene)
+                LOGGER.debug(res)
+
         elif cmd == "input":
             if args.action == "list":
                 data = get_inputs(cl)
@@ -236,7 +242,10 @@ def main():
             elif args.action == "set":
                 if not args.INPUT or not args.PROPERTY or not args.VALUE:
                     raise ValueError("Missing input name, property or value")
-                set_input_setting(cl, args.INPUT, args.PROPERTY, args.VALUE)
+                res = set_input_setting(
+                    cl, args.INPUT, args.PROPERTY, args.VALUE
+                )
+                LOGGER.debug(res)
 
         return 0
     except Exception:
