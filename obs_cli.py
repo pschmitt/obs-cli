@@ -79,6 +79,15 @@ def parse_args():
     filter_parser.add_argument("INPUT", nargs="?", help="Input name")
     filter_parser.add_argument("FILTER", nargs="?", help="Filter name")
 
+    hotkey_parser = subparsers.add_parser("hotkey")
+    hotkey_parser.add_argument(
+        "action",
+        choices=["list", "trigger"],
+        default="list",
+        help="list/trigger",
+    )
+    hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
+
     return parser.parse_args()
 
 
@@ -187,6 +196,14 @@ def disable_filter(cl, source, filter):
 def toggle_filter(cl, source, filter):
     enabled = is_filter_enabled(cl, source, filter)
     return cl.set_source_filter_enabled(source, filter, not enabled)
+
+
+def get_hotkeys(cl):
+    return cl.get_hot_key_list().hotkeys
+
+
+def trigger_hotkey(cl, hotkey):
+    return cl.trigger_hot_key_by_name(hotkey)
 
 
 def main():
@@ -307,6 +324,20 @@ def main():
                 res = is_filter_enabled(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
                 print("enabled" if res else "disabled")
+        elif cmd == "hotkey":
+            if args.action == "list":
+                data = get_hotkeys(cl)
+                if args.json:
+                    print_json(data=data)
+                    return
+                table = Table(title="Hotkeys")
+                table.add_column("Name")
+                for hk in data:
+                    table.add_row(hk)
+                console.print(table)
+            elif args.action == "trigger":
+                res = trigger_hotkey(cl, args.HOTKEY)
+                LOGGER.debug(res)
 
         return 0
     except Exception:
