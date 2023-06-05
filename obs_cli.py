@@ -69,6 +69,16 @@ def parse_args():
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
     input_parser.add_argument("VALUE", nargs="?", help="Property value")
 
+    filter_parser = subparsers.add_parser("filter")
+    filter_parser.add_argument(
+        "action",
+        choices=["list", "toggle", "enable", "disable", "status"],
+        default="list",
+        help="list/toggle/enable/disable/status",
+    )
+    filter_parser.add_argument("INPUT", nargs="?", help="Input name")
+    filter_parser.add_argument("FILTER", nargs="?", help="Filter name")
+
     return parser.parse_args()
 
 
@@ -158,6 +168,27 @@ def set_input_setting(cl, input, key, value):
     return cl.set_input_settings(input, {key: value}, overlay=True)
 
 
+def get_filters(cl, input):
+    return cl.get_source_filter_list(input).filters
+
+
+def is_filter_enabled(cl, source, filter):
+    return cl.get_source_filter(source, filter).filter_enabled
+
+
+def enable_filter(cl, source, filter):
+    return cl.set_source_filter_enabled(source, filter, True)
+
+
+def disable_filter(cl, source, filter):
+    return cl.set_source_filter_enabled(source, filter, False)
+
+
+def toggle_filter(cl, source, filter):
+    enabled = is_filter_enabled(cl, source, filter)
+    return cl.set_source_filter_enabled(source, filter, not enabled)
+
+
 def main():
     console = Console()
     logging.basicConfig()
@@ -245,6 +276,35 @@ def main():
                 res = set_input_setting(
                     cl, args.INPUT, args.PROPERTY, args.VALUE
                 )
+                LOGGER.debug(res)
+
+        elif cmd == "filter":
+            if args.action == "list":
+                data = get_filters(cl, args.INPUT)
+                if args.json:
+                    print_json(data=data)
+                    return
+                table = Table(title=f"Filters for {args.INPUT}")
+                table.add_column("Kind")
+                table.add_column("Name")
+                table.add_column("Enabled", justify="center")
+                for filter in data:
+                    kind = filter.get("filterKind")
+                    name = filter.get("filterName")
+                    enabled = "✅" if filter.get("filterEnabled") else "❌"
+                    table.add_row(kind, name, enabled)
+                console.print(table)
+            elif args.action == "toggle":
+                res = toggle_filter(cl, args.INPUT, args.FILTER)
+                LOGGER.debug(res)
+            elif args.action == "enable":
+                res = enable_filter(cl, args.INPUT, args.FILTER)
+                LOGGER.debug(res)
+            elif args.action == "disable":
+                res = disable_filter(cl, args.INPUT, args.FILTER)
+                LOGGER.debug(res)
+            elif args.action == "status":
+                res = is_filter_enabled(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
 
         return 0
