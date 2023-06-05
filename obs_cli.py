@@ -7,7 +7,7 @@ import re
 import sys
 
 import obsws_python as obs
-from rich import print
+from rich import print, print_json
 from rich.console import Console
 from rich.table import Table
 
@@ -22,6 +22,7 @@ def parse_args():
     parser.add_argument("-p", "--password", help="password")
 
     subparsers = parser.add_subparsers(dest="command")
+
     scene_parser = subparsers.add_parser("scene")
     scene_parser.add_argument(
         "-e", "--exact", action="store_true", default=False, help="Exact match"
@@ -52,6 +53,17 @@ def parse_args():
         help="show/hide/toggle",
     )
     item_parser.add_argument("ITEM", nargs="?", help="Item to interact with")
+
+    input_parser = subparsers.add_parser("input")
+    input_parser.add_argument(
+        "action",
+        choices=["list", "show", "set"],
+        default="show",
+        help="list/show",
+    )
+    input_parser.add_argument("INPUT", nargs="?", help="Input name")
+    input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
+    input_parser.add_argument("VALUE", nargs="?", help="Property value")
 
     return parser.parse_args()
 
@@ -130,6 +142,18 @@ def get_current_scene_name(cl):
     return cl.get_current_program_scene().current_program_scene_name
 
 
+def get_inputs(cl):
+    return sorted(cl.get_input_list().inputs, key=lambda x: x.get("inputName"))
+
+
+def get_input_settings(cl, input):
+    return cl.get_input_settings(input).input_settings
+
+
+def set_input_setting(cl, input, key, value):
+    return cl.set_input_settings(input, {key: value}, overlay=True)
+
+
 def main():
     console = Console()
     logging.basicConfig()
@@ -177,6 +201,27 @@ def main():
                 show_item(cl, args.ITEM, args.scene)
             elif args.action == "hide":
                 hide_item(cl, args.ITEM, args.scene)
+        elif cmd == "input":
+            if args.action == "list":
+                table = Table(title="Inputs")
+                table.add_column("Kind")
+                table.add_column("Name")
+                for input in get_inputs(cl):
+                    kind = input.get("inputKind")
+                    name = input.get("inputName")
+                    table.add_row(kind, name)
+                console.print(table)
+            elif args.action == "show":
+                data = get_input_settings(cl, args.INPUT)
+                if args.PROPERTY:
+                    print(data.get(args.PROPERTY))
+                else:
+                    print_json(data=data)
+            elif args.action == "set":
+                if not args.INPUT or not args.PROPERTY or not args.VALUE:
+                    raise ValueError("Missing input name, property or value")
+                set_input_setting(cl, args.INPUT, args.PROPERTY, args.VALUE)
+
         return 0
     except Exception:
         console.print_exception(show_locals=True)
