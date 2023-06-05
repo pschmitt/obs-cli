@@ -61,9 +61,9 @@ def parse_args():
     input_parser = subparsers.add_parser("input")
     input_parser.add_argument(
         "action",
-        choices=["list", "show", "set"],
+        choices=["list", "show", "get", "set"],
         default="show",
-        help="list/show",
+        help="list/show/get/set",
     )
     input_parser.add_argument("INPUT", nargs="?", help="Input name")
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
@@ -263,7 +263,7 @@ def main():
                     name = input.get("inputName")
                     table.add_row(kind, name)
                 console.print(table)
-            elif args.action == "show":
+            elif args.action == "show" or args.action == "get":
                 data = get_input_settings(cl, args.INPUT)
                 if args.PROPERTY:
                     print(data.get(args.PROPERTY))
