@@ -3,6 +3,7 @@
 
 import argparse
 import logging
+import os
 import re
 import sys
 
@@ -19,7 +20,9 @@ def parse_args():
     parser.add_argument(
         "-P", "--port", help="port number", type=int, default=4455
     )
-    parser.add_argument("-p", "--password", help="password")
+    parser.add_argument(
+        "-p", "--password", required=False, help="password ($OBS_API_PASSWORD)"
+    )
     parser.add_argument("-j", "--json", action="store_true", default=False)
 
     subparsers = parser.add_subparsers(dest="command")
@@ -163,10 +166,10 @@ def main():
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
     LOGGER.debug(args)
 
+    password = args.password or os.environ.get("OBS_API_PASSWORD")
+
     try:
-        cl = obs.ReqClient(
-            host=args.host, port=args.port, password=args.password
-        )
+        cl = obs.ReqClient(host=args.host, port=args.port, password=password)
 
         cmd = args.command
         if cmd == "scene":
