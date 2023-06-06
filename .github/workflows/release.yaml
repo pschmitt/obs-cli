@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/myl
+      url: https://pypi.org/p/obs-cli
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
