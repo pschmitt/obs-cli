@@ -15,10 +15,14 @@ This implementation of `obs-cli` is:
 
 ## 💻 Installation
 
-You can install `obs-cli` using pip:
+You can install `obs-cli` using pip(x):
 
 ```shell
+# pipx
 pipx install obs-cli
+
+# pip
+pip install --user obs-cli
 ```
 
 ## 🛠️ Usage
