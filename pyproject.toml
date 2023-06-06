@@ -19,7 +19,7 @@ dependencies = [
   "obsws-python",
   "rich"
 ]
-version = "0.5.2"
+version = "0.6.1"
 
 [tool.black]
 line-length = 79
