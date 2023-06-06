@@ -105,6 +105,14 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
+    record_parser = subparsers.add_parser("record")
+    record_parser.add_argument(
+        "action",
+        choices=["status", "start", "stop", "toggle"],
+        default="status",
+        help="status/start/stop/toggle",
+    )
+
     return parser.parse_args()
 
 
@@ -253,6 +261,22 @@ def stream_stop(cl):
 
 def stream_toggle(cl):
     return cl.toggle_stream()
+
+
+def record_status(cl):
+    return cl.get_record_status().output_active
+
+
+def record_start(cl):
+    return cl.start_record()
+
+
+def record_stop(cl):
+    return cl.stop_record()
+
+
+def record_toggle(cl):
+    return cl.toggle_record()
 
 
 def main():
@@ -422,6 +446,23 @@ def main():
                 LOGGER.debug(res)
             elif args.action == "toggle":
                 res = stream_toggle(cl)
+                LOGGER.debug(res)
+
+        elif cmd == "record":
+            if args.action == "status":
+                res = record_status(cl)
+                LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
+                print("started" if res else "stopped")
+            elif args.action == "start":
+                res = record_start(cl)
+                LOGGER.debug(res)
+            elif args.action == "stop":
+                res = record_stop(cl)
+                LOGGER.debug(res)
+            elif args.action == "toggle":
+                res = record_toggle(cl)
                 LOGGER.debug(res)
 
         return 0
