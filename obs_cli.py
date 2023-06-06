@@ -89,6 +89,14 @@ def parse_args():
     )
     hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
 
+    virtualcam_parser = subparsers.add_parser("virtualcam")
+    virtualcam_parser.add_argument(
+        "action",
+        choices=["status", "start", "stop", "toggle"],
+        default="status",
+        help="status/start/stop/toggle",
+    )
+
     return parser.parse_args()
 
 
@@ -205,6 +213,22 @@ def get_hotkeys(cl):
 
 def trigger_hotkey(cl, hotkey):
     return cl.trigger_hot_key_by_name(hotkey)
+
+
+def virtual_camera_status(cl):
+    return cl.get_virtual_cam_status().output_active
+
+
+def virtual_camera_start(cl):
+    return cl.start_virtual_cam()
+
+
+def virtual_camera_stop(cl):
+    return cl.stop_virtual_cam()
+
+
+def virtual_camera_toggle(cl):
+    return cl.toggle_virtual_cam()
 
 
 def main():
@@ -340,6 +364,22 @@ def main():
                 console.print(table)
             elif args.action == "trigger":
                 res = trigger_hotkey(cl, args.HOTKEY)
+                LOGGER.debug(res)
+        elif cmd == "virtualcam":
+            if args.action == "status":
+                res = virtual_camera_status(cl)
+                LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
+                print("started" if res else "stopped")
+            elif args.action == "start":
+                res = virtual_camera_start(cl)
+                LOGGER.debug(res)
+            elif args.action == "stop":
+                res = virtual_camera_stop(cl)
+                LOGGER.debug(res)
+            elif args.action == "toggle":
+                res = virtual_camera_toggle(cl)
                 LOGGER.debug(res)
 
         return 0
