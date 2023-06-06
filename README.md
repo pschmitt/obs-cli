@@ -136,6 +136,102 @@ To list all hotkeys:
 obs-cli hotkey list
 ```
 
+### 🎥 Virtual Camera Management
+
+You can manage the virtual camera using the `virtualcam` command:
+
+```shell
+obs-cli virtualcam --help
+```
+
+For example, to start the virtual camera:
+
+```shell
+obs-cli virtualcam start
+```
+
+To stop the virtual camera:
+
+```shell
+obs-cli virtualcam stop
+```
+
+To toggle the virtual camera:
+
+```shell
+obs-cli virtualcam toggle
+```
+
+To get the status of the virtual camera:
+
+```shell
+obs-cli virtualcam status
+```
+
+### 📡 Stream Management
+
+You can manage the stream using the `stream` command:
+
+```shell
+obs-cli stream --help
+```
+
+For example, to start streaming:
+
+```shell
+obs-cli stream start
+```
+
+To stop streaming:
+
+```shell
+obs-cli stream stop
+```
+
+To toggle streaming:
+
+```shell
+obs-cli stream toggle
+```
+
+To get the status of the stream:
+
+```shell
+obs-cli stream status
+```
+
+### 🎥 Record Management
+
+You can manage recording using the `record` command:
+
+```shell
+obs-cli record --help
+```
+
+For example, to start recording:
+
+```shell
+obs-cli record start
+```
+
+To stop recording:
+
+```shell
+obs-cli record stop
+```
+
+To toggle recording:
+
+```shell
+obs-cli record toggle
+```
+
+To get the status of the recording:
+
+```shell
+obs-cli record status
+```
+
 ## 📄 License
 
 This project is licensed under the GPL-3.0 License. See [LICENSE](LICENSE) for more information.
