@@ -68,13 +68,13 @@ obs-cli item --help
 For example, to hide an item named "Item1" in a scene named "Scene2":
 
 ```shell
-obs-cli item hide --scene "Scene2" --item "Item1"
+obs-cli item hide --scene "Scene2" "Item1"
 ```
 
 And to show it:
 
 ```shell
-obs-cli item show --scene "Scene2" --item "Item1"
+obs-cli item show --scene "Scene2" "Item1"
 ```
 
 To list all items in a scene:
@@ -94,7 +94,7 @@ obs-cli input --help
 For example, to get the settings of an input named "Mic/Aux":
 
 ```shell
-obs-cli input get --input "Mic/Aux"
+obs-cli input get "Mic/Aux"
 ```
 
 To list all inputs:
@@ -114,19 +114,19 @@ obs-cli filter --help
 For example, to enable a filter named "Filter1" on an input named "Mic/Aux":
 
 ```shell
-obs-cli filter enable --input "Mic/Aux" --filter "Filter1"
+obs-cli filter enable "Mic/Aux" "Filter1"
 ```
 
 And to disable it:
 
 ```shell
-obs-cli filter disable --input "Mic/Aux" --filter "Filter1"
+obs-cli filter disable "Mic/Aux" "Filter1"
 ```
 
 To list all filters on an input:
 
 ```shell
-obs-cli filter list --input "Mic/Aux"
+obs-cli filter list "Mic/Aux"
 ```
 
 ### ⌨️ Hotkey Management
@@ -140,7 +140,7 @@ obs-cli hotkey --help
 For example, to trigger a hotkey named "Hotkey1":
 
 ```shell
-obs-cli hotkey trigger --hotkey "Hotkey1"
+obs-cli hotkey trigger "Hotkey1"
 ```
 
 To list all hotkeys:
