@@ -90,7 +90,7 @@ To list all inputs:
 obs-cli input list
 ```
 
-### 🎨 Filter Management :%s/\s\+$//e
+### 🎨 Filter Management
 
 You can manage filters using the `filter` command:
 
