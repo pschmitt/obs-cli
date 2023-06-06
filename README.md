@@ -1,8 +1,17 @@
 # 🎬🎥 OBS CLI
 
-`obs-cli` is a command-line interface for OBS Studio. It allows you to control OBS Studio from the command line, making it easier to automate scene switching, source toggling, and more.
+`obs-cli` is a command-line interface for OBS Studio.
 
-This implementation of `obs-cli` is written in Python 3 and powered by [rich](https://github.com/Textualize/rich) and [obsws-python](https://pypi.org/project/obsws-python/). It supports the new OBS WebSocket API only.
+It allows you to control OBS Studio from the command line, making it easier to
+automate scene switching, source toggling, and more.
+
+This implementation of `obs-cli` is:
+
+- written in Python 3
+- powered by [rich](https://github.com/Textualize/rich) and
+[obsws-python](https://pypi.org/project/obsws-python/).
+
+⚠️ Only the new OBS WebSocket API (v5) is supported!
 
 ## 💻 Installation
 
@@ -234,5 +243,7 @@ obs-cli record status
 
 ## 📄 License
 
-This project is licensed under the GPL-3.0 License. See [LICENSE](LICENSE) for more information.
+This project is licensed under the GPL-3.0 License.
+
+See [LICENSE](LICENSE) for more information.
 
