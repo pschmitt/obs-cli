@@ -97,6 +97,14 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
+    stream_parser = subparsers.add_parser("stream")
+    stream_parser.add_argument(
+        "action",
+        choices=["status", "start", "stop", "toggle"],
+        default="status",
+        help="status/start/stop/toggle",
+    )
+
     return parser.parse_args()
 
 
@@ -229,6 +237,22 @@ def virtual_camera_stop(cl):
 
 def virtual_camera_toggle(cl):
     return cl.toggle_virtual_cam()
+
+
+def stream_status(cl):
+    return cl.get_stream_status().output_active
+
+
+def stream_start(cl):
+    return cl.start_stream()
+
+
+def stream_stop(cl):
+    return cl.stop_stream()
+
+
+def stream_toggle(cl):
+    return cl.toggle_stream()
 
 
 def main():
@@ -365,6 +389,7 @@ def main():
             elif args.action == "trigger":
                 res = trigger_hotkey(cl, args.HOTKEY)
                 LOGGER.debug(res)
+
         elif cmd == "virtualcam":
             if args.action == "status":
                 res = virtual_camera_status(cl)
@@ -380,6 +405,23 @@ def main():
                 LOGGER.debug(res)
             elif args.action == "toggle":
                 res = virtual_camera_toggle(cl)
+                LOGGER.debug(res)
+
+        elif cmd == "stream":
+            if args.action == "status":
+                res = stream_status(cl)
+                LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
+                print("started" if res else "stopped")
+            elif args.action == "start":
+                res = stream_start(cl)
+                LOGGER.debug(res)
+            elif args.action == "stop":
+                res = stream_stop(cl)
+                LOGGER.debug(res)
+            elif args.action == "toggle":
+                res = stream_toggle(cl)
                 LOGGER.debug(res)
 
         return 0
