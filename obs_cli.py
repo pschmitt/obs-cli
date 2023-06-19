@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import argparse
+import json
 import logging
 import os
 import re
@@ -199,6 +200,11 @@ def get_input_settings(cl, input):
 
 
 def set_input_setting(cl, input, key, value):
+    try:
+        value = json.loads(value)
+    except (ValueError, TypeError):
+        pass
+    LOGGER.debug(f"Setting {key} to {value} ({type(value)})")
     return cl.set_input_settings(input, {key: value}, overlay=True)
 
 
