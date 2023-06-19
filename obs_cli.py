@@ -27,7 +27,7 @@ def parse_args():
     )
     parser.add_argument("-j", "--json", action="store_true", default=False)
 
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
     scene_parser = subparsers.add_parser("scene")
     scene_parser.add_argument(
