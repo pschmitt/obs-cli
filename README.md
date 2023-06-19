@@ -97,6 +97,12 @@ For example, to get the settings of an input named "Mic/Aux":
 obs-cli input get "Mic/Aux"
 ```
 
+To set the device_id of a webcam input named "Webcam":
+
+```shell
+obs-cli input set "Webcam" device_id /dev/v4l/by-id/usb-Elgato_Elgato_Facecam_FW52K1A04919-video-index0
+```
+
 To list all inputs:
 
 ```shell
