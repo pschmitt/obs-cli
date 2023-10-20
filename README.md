@@ -48,7 +48,7 @@ obs-cli scene --help
 For example, to switch to a scene named "Scene2":
 
 ```shell
-obs-cli scene switch --scene "Scene2"
+obs-cli scene switch "Scene2"
 ```
 
 To list all scenes:
@@ -256,4 +256,3 @@ obs-cli record status
 This project is licensed under the GPL-3.0 License.
 
 See [LICENSE](LICENSE) for more information.
-
