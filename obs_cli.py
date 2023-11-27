@@ -125,7 +125,6 @@ def switch_to_scene(cl, scene, exact=False, ignorecase=True):
     for sc in sorted(
         cl.get_scene_list().scenes, key=lambda x: x.get("sceneName")
     ):
-        print(f"Compare {scene} with {sc.get('sceneName')}")
         if re.search(regex, sc.get("sceneName")):
             cl.set_current_program_scene(sc.get("sceneName"))
             return True
