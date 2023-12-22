@@ -358,16 +358,15 @@ def main():
 
                 table = Table(title=f"Items in scene '{scene}'")
                 table.add_column("ID")
+                table.add_column("Group")
                 table.add_column("Name")
                 table.add_column("Enabled", justify="center")
                 for item in data:
                     item_id = str(item.get("sceneItemId"))
                     name = item.get("sourceName")
-                    parent = item.get("parentGroup", {}).get("sourceName")
-                    if parent:
-                        name = f"{parent}/{name}"
+                    group = item.get("parentGroup", {}).get("sourceName", "N/A")
                     enabled = "✅" if item.get("sceneItemEnabled") else "❌"
-                    table.add_row(item_id, name, enabled)
+                    table.add_row(item_id, group, name, enabled)
                 console.print(table)
             elif args.action == "toggle":
                 res = toggle_item(cl, args.ITEM, args.scene)
