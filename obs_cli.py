@@ -130,12 +130,23 @@ def switch_to_scene(cl, scene, exact=False, ignorecase=True):
             return True
 
 
-def get_items(cl, scene=None, names_only=False):
+def get_items(cl, scene=None, names_only=False, recurse=True):
     scene = scene or get_current_scene_name(cl)
-    items = sorted(
-        cl.get_scene_item_list(scene).scene_items,
-        key=lambda x: x.get("sourceName"),
-    )
+    items = cl.get_scene_item_list(scene).scene_items
+    if recurse:
+        all_items = []
+        for it in items:
+            if it.get("isGroup"):
+                for grp_it in cl.get_group_scene_item_list(
+                    it.get("sourceName")
+                ).scene_items:
+                    # Inject parent group attribute
+                    grp_it["parentGroup"] = it
+                    all_items.append(grp_it)
+            else:
+                all_items.append(it)
+        items = all_items
+    items = sorted(items, key=lambda x: x.get("sourceName"))
 
     return [x.get("sourceName") for x in items] if names_only else items
 
@@ -159,6 +170,15 @@ def get_item_id(cl, item, scene=None):
     return data.get("sceneItemId", -1)
 
 
+def get_item_parent(cl, item, scene=None):
+    data = get_item_by_name(cl, item, scene=scene)
+    if not data:
+        LOGGER.warning(f"Item not found: {item} (in {scene})")
+        return -1
+    parent_group = data.get("parentGroup")
+    return parent_group.get("sourceName") if parent_group else scene
+
+
 def is_item_enabled(cl, item, scene=None):
     data = get_item_by_name(cl, item, scene=scene)
     if not data:
@@ -170,20 +190,23 @@ def is_item_enabled(cl, item, scene=None):
 def show_item(cl, item, scene=None):
     scene = scene or get_current_scene_name(cl)
     item_id = get_item_id(cl, item, scene)
-    return cl.set_scene_item_enabled(scene, item_id, True)
+    parent = get_item_parent(cl, item, scene)
+    return cl.set_scene_item_enabled(parent, item_id, True)
 
 
 def hide_item(cl, item, scene=None):
     scene = scene or get_current_scene_name(cl)
     item_id = get_item_id(cl, item, scene)
-    return cl.set_scene_item_enabled(scene, item_id, False)
+    parent = get_item_parent(cl, item, scene)
+    return cl.set_scene_item_enabled(parent, item_id, False)
 
 
 def toggle_item(cl, item, scene=None):
     scene = scene or get_current_scene_name(cl)
     item_id = get_item_id(cl, item, scene)
+    parent = get_item_parent(cl, item, scene)
     enabled = is_item_enabled(cl, item, scene)
-    return cl.set_scene_item_enabled(scene, item_id, not enabled)
+    return cl.set_scene_item_enabled(parent, item_id, not enabled)
 
 
 def get_current_scene_name(cl):
@@ -330,6 +353,9 @@ def main():
                 for item in data:
                     item_id = str(item.get("sceneItemId"))
                     name = item.get("sourceName")
+                    parent = item.get("parentGroup", {}).get("sourceName")
+                    if parent:
+                        name = f"{parent}/{name}"
                     enabled = "✅" if item.get("sceneItemEnabled") else "❌"
                     table.add_row(item_id, name, enabled)
                 console.print(table)
