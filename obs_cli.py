@@ -118,6 +118,10 @@ def parse_args():
     return parser.parse_args()
 
 
+class ObsItemNotFoundException(ValueError):
+    pass
+
+
 def switch_to_scene(cl, scene, exact=False, ignorecase=True):
     regex = re.compile(
         f"^{scene}$" if exact else scene,
@@ -172,29 +176,24 @@ def get_item_by_name(cl, item, ignorecase=True, exact=False, scene=None):
         if re.search(regex, it.get("sourceName")):
             return it
 
+    raise ObsItemNotFoundException(
+        f"Item not found: '{item}' (Scene: '{scene}')"
+    )
+
 
 def get_item_id(cl, item, scene=None):
     data = get_item_by_name(cl, item, scene=scene)
-    if not data:
-        LOGGER.warning(f"Item not found: {item} (in {scene})")
-        return -1
     return data.get("sceneItemId", -1)
 
 
 def get_item_parent(cl, item, scene=None):
     data = get_item_by_name(cl, item, scene=scene)
-    if not data:
-        LOGGER.warning(f"Item not found: {item} (in {scene})")
-        return -1
     parent_group = data.get("parentGroup")
     return parent_group.get("sourceName") if parent_group else scene
 
 
 def is_item_enabled(cl, item, scene=None):
     data = get_item_by_name(cl, item, scene=scene)
-    if not data:
-        LOGGER.warning(f"Item not found: {item} (in {scene})")
-        return -1
     return data.get("sceneItemEnabled", False)
 
 
@@ -509,6 +508,9 @@ def main():
                 LOGGER.debug(res)
 
         return 0
+    except ObsItemNotFoundException as ecp:
+        print(f"ERROR {ecp}", file=sys.stderr)
+        return 1
     except Exception:
         console.print_exception(show_locals=True)
         return 1
