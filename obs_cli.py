@@ -12,6 +12,7 @@ import obsws_python as obs
 from rich import print, print_json
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 
 def parse_args():
@@ -364,9 +365,9 @@ def main():
                 for item in data:
                     item_id = str(item.get("sceneItemId"))
                     name = item.get("sourceName")
-                    group = item.get("parentGroup", {}).get(
-                        "sourceName", "N/A"
-                    )
+                    group = item.get("parentGroup", {}).get("sourceName")
+                    if not group:
+                        group = Text("N/A", style="italic black")
                     enabled = "✅" if item.get("sceneItemEnabled") else "❌"
                     table.add_row(item_id, group, name, enabled)
                 console.print(table)
