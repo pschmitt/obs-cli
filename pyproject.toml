@@ -21,6 +21,12 @@ dependencies = [
 ]
 version = "0.6.2"
 
+[project.urls]
+Homepage = "https://github.com/pschmitt/obs-cli"
+Documentation = "https://github.com/pschmitt/obs-cli/blob/HEAD/README.md"
+Repository = "https://github.com/pschmitt/obs-cli"
+Issues = "https://github.com/pschmitt/obs-cli/issues"
+
 [tool.black]
 line-length = 79
 
