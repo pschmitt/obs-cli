@@ -146,7 +146,17 @@ def get_items(cl, scene=None, names_only=False, recurse=True):
             else:
                 all_items.append(it)
         items = all_items
-    items = sorted(items, key=lambda x: x.get("sourceName"))
+
+    items = sorted(
+        items,
+        key=lambda x: (
+            x.get("parentGroup") is None,  # Items with parentGroup come first
+            x.get("parentGroup", {}).get("sourceName")
+            if x.get("parentGroup")
+            else None,  # Then sort by parentGroup.sourceName
+            x.get("sourceName"),  # Finally, sort by sourceName
+        ),
+    )
 
     return [x.get("sourceName") for x in items] if names_only else items
 
