@@ -364,7 +364,9 @@ def main():
                 for item in data:
                     item_id = str(item.get("sceneItemId"))
                     name = item.get("sourceName")
-                    group = item.get("parentGroup", {}).get("sourceName", "N/A")
+                    group = item.get("parentGroup", {}).get(
+                        "sourceName", "N/A"
+                    )
                     enabled = "✅" if item.get("sceneItemEnabled") else "❌"
                     table.add_row(item_id, group, name, enabled)
                 console.print(table)
