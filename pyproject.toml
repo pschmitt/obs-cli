@@ -19,7 +19,7 @@ dependencies = [
   "obsws-python",
   "rich"
 ]
-version = "0.6.4"
+version = "0.7.0"
 
 [project.urls]
 Homepage = "https://github.com/pschmitt/obs-cli"
