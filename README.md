@@ -109,6 +109,14 @@ To list all inputs:
 obs-cli input list
 ```
 
+Mute/unmute or toggle the mute state of an input:
+
+```shell
+obs-cli input mute "Mic/Aux"
+obs-cli input unmute "Mic/Aux"
+obs-cli input toggle-mute "Mic/Aux"
+```
+
 ### 🎨 Filter Management
 
 You can manage filters using the `filter` command:

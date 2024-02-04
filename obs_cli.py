@@ -64,9 +64,17 @@ def parse_args():
     input_parser = subparsers.add_parser("input")
     input_parser.add_argument(
         "action",
-        choices=["list", "show", "get", "set"],
+        choices=[
+            "list",
+            "show",
+            "get",
+            "set",
+            "mute",
+            "unmute",
+            "toggle-mute",
+        ],
         default="show",
-        help="list/show/get/set",
+        help="list/show/get/set/mute/unmute/toggle-mute",
     )
     input_parser.add_argument("INPUT", nargs="?", help="Input name")
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
@@ -240,6 +248,22 @@ def set_input_setting(cl, input, key, value):
     return cl.set_input_settings(input, {key: value}, overlay=True)
 
 
+def get_mute_state(cl, input):
+    return cl.get_input_mute(input).input_muted
+
+
+def mute_input(cl, input):
+    cl.set_input_mute(input, True)
+
+
+def unmute_input(cl, input):
+    cl.set_input_mute(input, False)
+
+
+def toggle_mute_input(cl, input):
+    cl.toggle_input_mute(input)
+
+
 def get_filters(cl, input):
     return cl.get_source_filter_list(input).filters
 
@@ -390,10 +414,15 @@ def main():
                 table = Table(title="Inputs")
                 table.add_column("Kind")
                 table.add_column("Name")
+                table.add_column("Muted")
                 for input in data:
                     kind = input.get("inputKind")
                     name = input.get("inputName")
-                    table.add_row(kind, name)
+                    mute_state = ""
+                    # FIXME The inputKind whitelist here is probably incomplete
+                    if kind in ["ffmpeg_source"] or "capture" in kind:
+                        mute_state = "🔇" if get_mute_state(cl, name) else ""
+                    table.add_row(kind, name, mute_state)
                 console.print(table)
             elif args.action == "show" or args.action == "get":
                 data = get_input_settings(cl, args.INPUT)
@@ -408,6 +437,18 @@ def main():
                 res = set_input_setting(
                     cl, args.INPUT, args.PROPERTY, args.VALUE
                 )
+                LOGGER.debug(res)
+
+            elif args.action == "mute":
+                res = mute_input(cl, args.INPUT)
+                LOGGER.debug(res)
+
+            elif args.action == "unmute":
+                res = unmute_input(cl, args.INPUT)
+                LOGGER.debug(res)
+
+            elif args.action == "toggle-mute":
+                res = toggle_mute_input(cl, args.INPUT)
                 LOGGER.debug(res)
 
         elif cmd == "filter":
