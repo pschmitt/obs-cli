@@ -123,6 +123,14 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
+    replay_parser = subparsers.add_parser("replay")
+    replay_parser.add_argument(
+        "action",
+        choices=["status", "start", "stop", "toggle", "save"],
+        default="status",
+        help="status/start/stop/toggle",
+    )
+
     return parser.parse_args()
 
 
@@ -164,11 +172,9 @@ def get_items(cl, scene=None, names_only=False, recurse=True):
         items,
         key=lambda x: (
             x.get("parentGroup") is None,  # Items with parentGroup come first
-            (
-                x.get("parentGroup", {}).get("sourceName")
-                if x.get("parentGroup")
-                else None
-            ),  # Then sort by parentGroup.sourceName
+            x.get("parentGroup", {}).get("sourceName")
+            if x.get("parentGroup")
+            else None,  # Then sort by parentGroup.sourceName
             x.get("sourceName"),  # Finally, sort by sourceName
         ),
     )
@@ -322,14 +328,26 @@ def stream_start(cl):
 def stream_stop(cl):
     return cl.stop_stream()
 
-
 def stream_toggle(cl):
     return cl.toggle_stream()
 
+def replay_start(cl):
+    return cl.start_replay_buffer()
+
+def replay_stop(cl):
+    return cl.stop_replay_buffer()
+
+def replay_save(cl):
+    return cl.save_replay_buffer()
+
+def replay_toggle(cl):
+    return cl.toggle_replay_buffer()
+
+def replay_status(cl):
+    return cl.get_replay_buffer_status().output_active
 
 def record_status(cl):
     return cl.get_record_status().output_active
-
 
 def record_start(cl):
     return cl.start_record()
@@ -355,7 +373,7 @@ def main():
 
     try:
         cl = obs.ReqClient(host=args.host, port=args.port, password=password)
-
+        
         cmd = args.command
         if cmd == "scene":
             if args.action == "current":
@@ -548,6 +566,26 @@ def main():
                 LOGGER.debug(res)
             elif args.action == "toggle":
                 res = record_toggle(cl)
+                LOGGER.debug(res)
+
+        elif cmd == "replay":
+            if args.action == "status":
+                res = replay_status(cl)
+                LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
+                print("started" if res else "stopped")
+            elif args.action == "start":
+                res = replay_start(cl)
+                LOGGER.debug(res)
+            elif args.action == "stop":
+                res = replay_stop(cl)
+                LOGGER.debug(res)
+            elif args.action == "toggle":
+                res = replay_toggle(cl)
+                LOGGER.debug(res)
+            elif args.action == "save":
+                res = replay_save(cl)
                 LOGGER.debug(res)
 
         return 0
