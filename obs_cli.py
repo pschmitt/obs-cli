@@ -328,26 +328,34 @@ def stream_start(cl):
 def stream_stop(cl):
     return cl.stop_stream()
 
+
 def stream_toggle(cl):
     return cl.toggle_stream()
+
 
 def replay_start(cl):
     return cl.start_replay_buffer()
 
+
 def replay_stop(cl):
     return cl.stop_replay_buffer()
+
 
 def replay_save(cl):
     return cl.save_replay_buffer()
 
+
 def replay_toggle(cl):
     return cl.toggle_replay_buffer()
+
 
 def replay_status(cl):
     return cl.get_replay_buffer_status().output_active
 
+
 def record_status(cl):
     return cl.get_record_status().output_active
+
 
 def record_start(cl):
     return cl.start_record()
@@ -373,7 +381,7 @@ def main():
 
     try:
         cl = obs.ReqClient(host=args.host, port=args.port, password=password)
-        
+
         cmd = args.command
         if cmd == "scene":
             if args.action == "current":
