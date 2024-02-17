@@ -123,6 +123,14 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
+    replay_parser = subparsers.add_parser("replay")
+    replay_parser.add_argument(
+        "action",
+        choices=["status", "start", "stop", "toggle", "save"],
+        default="status",
+        help="status/start/stop/toggle",
+    )
+
     return parser.parse_args()
 
 
@@ -325,6 +333,26 @@ def stream_stop(cl):
 
 def stream_toggle(cl):
     return cl.toggle_stream()
+
+
+def replay_start(cl):
+    return cl.start_replay_buffer()
+
+
+def replay_stop(cl):
+    return cl.stop_replay_buffer()
+
+
+def replay_save(cl):
+    return cl.save_replay_buffer()
+
+
+def replay_toggle(cl):
+    return cl.toggle_replay_buffer()
+
+
+def replay_status(cl):
+    return cl.get_replay_buffer_status().output_active
 
 
 def record_status(cl):
@@ -548,6 +576,26 @@ def main():
                 LOGGER.debug(res)
             elif args.action == "toggle":
                 res = record_toggle(cl)
+                LOGGER.debug(res)
+
+        elif cmd == "replay":
+            if args.action == "status":
+                res = replay_status(cl)
+                LOGGER.debug(res)
+                if args.quiet:
+                    sys.exit(0 if res else 1)
+                print("started" if res else "stopped")
+            elif args.action == "start":
+                res = replay_start(cl)
+                LOGGER.debug(res)
+            elif args.action == "stop":
+                res = replay_stop(cl)
+                LOGGER.debug(res)
+            elif args.action == "toggle":
+                res = replay_toggle(cl)
+                LOGGER.debug(res)
+            elif args.action == "save":
+                res = replay_save(cl)
                 LOGGER.debug(res)
 
         return 0
