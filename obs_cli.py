@@ -172,9 +172,11 @@ def get_items(cl, scene=None, names_only=False, recurse=True):
         items,
         key=lambda x: (
             x.get("parentGroup") is None,  # Items with parentGroup come first
-            x.get("parentGroup", {}).get("sourceName")
-            if x.get("parentGroup")
-            else None,  # Then sort by parentGroup.sourceName
+            (
+                x.get("parentGroup", {}).get("sourceName")
+                if x.get("parentGroup")
+                else None
+            ),  # Then sort by parentGroup.sourceName
             x.get("sourceName"),  # Finally, sort by sourceName
         ),
     )
