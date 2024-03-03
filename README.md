@@ -83,6 +83,32 @@ To list all items in a scene:
 obs-cli item list --scene "Scene2"
 ```
 
+### 📂 Group Management
+
+You can manage scene item groups using the `group` command:
+
+```shell
+obs-cli group --help
+```
+
+For example, to hide an group named "group1" in a scene named "Scene2":
+
+```shell
+obs-cli group hide --scene "Scene2" "group1"
+```
+
+And to show it:
+
+```shell
+obs-cli group show --scene "Scene2" "group1"
+```
+
+To list all groups in a scene:
+
+```shell
+obs-cli group list --scene "Scene2"
+```
+
 ### 🎤 Input Management
 
 You can manage inputs using the `input` command:
