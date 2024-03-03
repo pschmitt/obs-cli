@@ -267,7 +267,9 @@ def toggle_item(cl, item, scene=None, is_group=False):
     scene = scene or get_current_scene_name(cl)
     item_id = get_item_id(cl, item=item, scene=scene, is_group=is_group)
     parent = scene if is_group else get_item_parent(cl, item, scene)
-    enabled = not is_item_enabled(cl, item=item, scene=scene, is_group=is_group)
+    enabled = not is_item_enabled(
+        cl, item=item, scene=scene, is_group=is_group
+    )
     return cl.set_scene_item_enabled(parent, item_id, enabled)
 
 
