@@ -49,6 +49,20 @@ def parse_args():
     )
     scene_parser.add_argument("SCENE", nargs="?", help="Scene name")
 
+    group_parser = subparsers.add_parser("group")
+    group_parser.add_argument(
+        "-s", "--scene", required=False, help="Scene name (default: current)"
+    )
+    group_parser.add_argument(
+        "action",
+        choices=["list", "show", "hide", "toggle"],
+        default="toggle",
+        help="show/hide/toggle",
+    )
+    group_parser.add_argument(
+        "group", nargs="?", help="group to interact with"
+    )
+
     item_parser = subparsers.add_parser("item")
     item_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
@@ -151,13 +165,17 @@ def switch_to_scene(cl, scene, exact=False, ignorecase=True):
             return True
 
 
-def get_items(cl, scene=None, names_only=False, recurse=True):
+def get_items(
+    cl, scene=None, names_only=False, recurse=True, include_groups=False
+):
     scene = scene or get_current_scene_name(cl)
     items = cl.get_scene_item_list(scene).scene_items
     if recurse:
         all_items = []
         for it in items:
             if it.get("isGroup"):
+                if include_groups:
+                    all_items.append(it)
                 for grp_it in cl.get_group_scene_item_list(
                     it.get("sourceName")
                 ).scene_items:
@@ -184,8 +202,24 @@ def get_items(cl, scene=None, names_only=False, recurse=True):
     return [x.get("sourceName") for x in items] if names_only else items
 
 
-def get_item_by_name(cl, item, ignorecase=True, exact=False, scene=None):
-    items = get_items(cl, scene)
+def get_groups(cl, scene=None, names_only=False):
+    scene = scene or get_current_scene_name(cl)
+    groups = sorted(
+        [
+            x
+            for x in cl.get_scene_item_list(scene).scene_items
+            if x.get("isGroup", False)
+        ],
+        key=lambda x: x.get("sourceName"),
+    )
+
+    return [x.get("sourceName") for x in groups] if names_only else groups
+
+
+def get_item_by_name(
+    cl, item, ignorecase=True, exact=False, scene=None, is_group=False
+):
+    items = get_items(cl, scene) if not is_group else get_groups(cl, scene)
     regex = re.compile(
         item if not exact else f"^{item}$",
         re.IGNORECASE if ignorecase else re.NOFLAG,
@@ -199,8 +233,8 @@ def get_item_by_name(cl, item, ignorecase=True, exact=False, scene=None):
     )
 
 
-def get_item_id(cl, item, scene=None):
-    data = get_item_by_name(cl, item, scene=scene)
+def get_item_id(cl, item, scene=None, is_group=False):
+    data = get_item_by_name(cl, item, scene=scene, is_group=is_group)
     return data.get("sceneItemId", -1)
 
 
@@ -210,31 +244,31 @@ def get_item_parent(cl, item, scene=None):
     return parent_group.get("sourceName") if parent_group else scene
 
 
-def is_item_enabled(cl, item, scene=None):
-    data = get_item_by_name(cl, item, scene=scene)
-    return data.get("sceneItemEnabled", False)
+def is_item_enabled(cl, item, scene=None, is_group=False):
+    data = get_item_by_name(cl, item=item, is_group=is_group, scene=scene)
+    return data.get("sceneItemEnabled")
 
 
-def show_item(cl, item, scene=None):
+def show_item(cl, item, scene=None, is_group=False):
     scene = scene or get_current_scene_name(cl)
-    item_id = get_item_id(cl, item, scene)
-    parent = get_item_parent(cl, item, scene)
+    item_id = get_item_id(cl, item=item, scene=scene, is_group=is_group)
+    parent = scene if is_group else get_item_parent(cl, item, scene)
     return cl.set_scene_item_enabled(parent, item_id, True)
 
 
-def hide_item(cl, item, scene=None):
+def hide_item(cl, item, scene=None, is_group=False):
     scene = scene or get_current_scene_name(cl)
-    item_id = get_item_id(cl, item, scene)
-    parent = get_item_parent(cl, item, scene)
+    item_id = get_item_id(cl, item=item, scene=scene, is_group=is_group)
+    parent = scene if is_group else get_item_parent(cl, item, scene)
     return cl.set_scene_item_enabled(parent, item_id, False)
 
 
-def toggle_item(cl, item, scene=None):
+def toggle_item(cl, item, scene=None, is_group=False):
     scene = scene or get_current_scene_name(cl)
-    item_id = get_item_id(cl, item, scene)
-    parent = get_item_parent(cl, item, scene)
-    enabled = is_item_enabled(cl, item, scene)
-    return cl.set_scene_item_enabled(parent, item_id, not enabled)
+    item_id = get_item_id(cl, item=item, scene=scene, is_group=is_group)
+    parent = scene if is_group else get_item_parent(cl, item, scene)
+    enabled = not is_item_enabled(cl, item=item, scene=scene, is_group=is_group)
+    return cl.set_scene_item_enabled(parent, item_id, enabled)
 
 
 def get_current_scene_name(cl):
@@ -400,11 +434,37 @@ def main():
             else:
                 print(get_current_scene_name(cl))
 
-        elif cmd == "item":
+        elif cmd == "group":
+            scene = args.scene or get_current_scene_name(cl)
             if args.action == "list":
-                # print(*get_items(cl, args.scene), sep="\n")
-                scene = args.scene or get_current_scene_name(cl)
+                data = get_groups(cl, scene)
+                if args.json:
+                    print_json(data=data)
+                    return
 
+                table = Table(title=f"groups in scene '{scene}'")
+                table.add_column("ID")
+                table.add_column("Name")
+                table.add_column("Enabled", justify="center")
+                for group in data:
+                    group_id = str(group.get("sceneItemId"))
+                    name = group.get("sourceName")
+                    enabled = "✅" if group.get("sceneItemEnabled") else "❌"
+                    table.add_row(group_id, name, enabled)
+                console.print(table)
+            elif args.action == "toggle":
+                res = toggle_item(cl, args.group, scene=scene, is_group=True)
+                LOGGER.debug(res)
+            elif args.action == "show":
+                res = show_item(cl, args.group, scene=scene, is_group=True)
+                LOGGER.debug(res)
+            elif args.action == "hide":
+                res = hide_item(cl, args.group, scene=scene, is_group=True)
+                LOGGER.debug(res)
+
+        elif cmd == "item":
+            scene = args.scene or get_current_scene_name(cl)
+            if args.action == "list":
                 data = get_items(cl, args.scene)
                 if args.json:
                     print_json(data=data)
@@ -425,13 +485,13 @@ def main():
                     table.add_row(item_id, group, name, enabled)
                 console.print(table)
             elif args.action == "toggle":
-                res = toggle_item(cl, args.ITEM, args.scene)
+                res = toggle_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
             elif args.action == "show":
-                res = show_item(cl, args.ITEM, args.scene)
+                res = show_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
             elif args.action == "hide":
-                res = hide_item(cl, args.ITEM, args.scene)
+                res = hide_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
 
         elif cmd == "input":
