@@ -19,12 +19,25 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-D", "--debug", action="store_true", default=False)
     parser.add_argument("-q", "--quiet", action="store_true", default=False)
-    parser.add_argument("-H", "--host", help="host name", default="localhost")
     parser.add_argument(
-        "-P", "--port", help="port number", type=int, default=4455
+        "-H",
+        "--host",
+        default=os.environ.get("OBS_API_HOST", "localhost"),
+        help="host name default: localhost ($OBS_API_HOST)",
     )
     parser.add_argument(
-        "-p", "--password", required=False, help="password ($OBS_API_PASSWORD)"
+        "-P",
+        "--port",
+        type=int,
+        default=os.environ.get("OBS_API_PORT", 4455),
+        help="port number default: 4455 ($OBS_API_PORT)",
+    )
+    parser.add_argument(
+        "-p",
+        "--password",
+        required=False,
+        default=os.environ.get("OBS_API_PASSWORD"),
+        help="password ($OBS_API_PASSWORD)",
     )
     parser.add_argument("-j", "--json", action="store_true", default=False)
 
@@ -415,10 +428,12 @@ def main():
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
     LOGGER.debug(args)
 
-    password = args.password or os.environ.get("OBS_API_PASSWORD")
-
     try:
-        cl = obs.ReqClient(host=args.host, port=args.port, password=password)
+        cl = obs.ReqClient(
+            host=args.host,
+            port=args.port,
+            password=args.password,
+        )
 
         cmd = args.command
         if cmd == "scene":
