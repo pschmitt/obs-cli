@@ -99,9 +99,10 @@ def parse_args():
             "mute",
             "unmute",
             "toggle-mute",
+            "is-muted",
         ],
         default="show",
-        help="list/show/get/set/mute/unmute/toggle-mute",
+        help="list/show/get/set/mute/unmute/toggle-mute/is-muted",
     )
     input_parser.add_argument("INPUT", nargs="?", help="Input name")
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
@@ -557,6 +558,10 @@ def main():
             elif args.action == "toggle-mute":
                 res = toggle_mute_input(cl, args.INPUT)
                 LOGGER.debug(res)
+
+            elif args.action == "is-muted":
+                res = get_mute_state(cl, args.INPUT)
+                print("enabled" if res else "disabled")
 
         elif cmd == "filter":
             if args.action == "list":
