@@ -3,5 +3,5 @@ mdurl==0.1.2
 obsws-python==1.8.0
 Pygments==2.19.2
 rich==14.2.0
-tomli==2.3.0
+tomli==2.4.0
 websocket-client==1.9.0
