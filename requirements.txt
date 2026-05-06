@@ -1,4 +1,4 @@
-markdown-it-py==4.0.0
+markdown-it-py==4.1.0
 mdurl==0.1.2
 obsws-python==1.8.0
 Pygments==2.20.0
