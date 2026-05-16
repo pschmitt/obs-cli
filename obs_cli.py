@@ -12,8 +12,6 @@ import sys
 import obsws_python as obs
 from rich import print, print_json
 from rich.console import Console
-from rich.table import Table
-from rich.text import Text
 from rich_argparse import RichHelpFormatter
 
 
@@ -497,6 +495,12 @@ def take_screenshot(cl, source, image_format="png", width=None, height=None, com
     return base64.b64decode(image_data)
 
 
+def print_tsv(headers, rows):
+    sys.stdout.write("\t".join(h.upper() for h in headers) + "\n")
+    for row in rows:
+        sys.stdout.write("\t".join("" if c is None else str(c) for c in row) + "\n")
+
+
 def main():
     console = Console()
     logging.basicConfig()
@@ -518,10 +522,11 @@ def main():
                 print(get_current_scene_name(cl))
             elif args.action == "list":
                 res = cl.get_scene_list()
-                print(
-                    *sorted([x.get("sceneName") for x in res.scenes]), sep="\n"
-                )
                 LOGGER.debug(res)
+                print_tsv(
+                    ["name"],
+                    [[x.get("sceneName")] for x in sorted(res.scenes, key=lambda x: x.get("sceneName"))],
+                )
             elif args.action == "switch":
                 res = switch_to_scene(cl, args.SCENE, exact=False)
                 LOGGER.debug(res)
@@ -570,16 +575,17 @@ def main():
                     print_json(data=data)
                     return
 
-                table = Table(title=f"groups in scene '{scene}'")
-                table.add_column("ID")
-                table.add_column("Name")
-                table.add_column("Enabled", justify="center")
-                for group in data:
-                    group_id = str(group.get("sceneItemId"))
-                    name = group.get("sourceName")
-                    enabled = "✅" if group.get("sceneItemEnabled") else "❌"
-                    table.add_row(group_id, name, enabled)
-                console.print(table)
+                print_tsv(
+                    ["id", "name", "enabled"],
+                    [
+                        [
+                            group.get("sceneItemId"),
+                            group.get("sourceName"),
+                            str(group.get("sceneItemEnabled")).lower(),
+                        ]
+                        for group in data
+                    ],
+                )
             elif args.action == "toggle":
                 res = toggle_item(cl, args.group, scene=scene, is_group=True)
                 LOGGER.debug(res)
@@ -598,20 +604,18 @@ def main():
                     print_json(data=data)
                     return
 
-                table = Table(title=f"Items in scene '{scene}'")
-                table.add_column("ID")
-                table.add_column("Group")
-                table.add_column("Name")
-                table.add_column("Enabled", justify="center")
-                for item in data:
-                    item_id = str(item.get("sceneItemId"))
-                    name = item.get("sourceName")
-                    group = item.get("parentGroup", {}).get("sourceName")
-                    if not group:
-                        group = Text("N/A", style="italic black")
-                    enabled = "✅" if item.get("sceneItemEnabled") else "❌"
-                    table.add_row(item_id, group, name, enabled)
-                console.print(table)
+                print_tsv(
+                    ["id", "group", "name", "enabled"],
+                    [
+                        [
+                            item.get("sceneItemId"),
+                            (item.get("parentGroup") or {}).get("sourceName", ""),
+                            item.get("sourceName"),
+                            str(item.get("sceneItemEnabled")).lower(),
+                        ]
+                        for item in data
+                    ],
+                )
             elif args.action == "toggle":
                 res = toggle_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
@@ -662,19 +666,17 @@ def main():
                     print_json(data=data)
                     return
 
-                table = Table(title="Inputs")
-                table.add_column("Kind")
-                table.add_column("Name")
-                table.add_column("Muted")
+                rows = []
                 for input in data:
                     kind = input.get("inputKind")
                     name = input.get("inputName")
-                    mute_state = ""
                     # FIXME The inputKind whitelist here is probably incomplete
                     if kind in ["ffmpeg_source"] or "capture" in kind:
-                        mute_state = "🔇" if get_mute_state(cl, name) else ""
-                    table.add_row(kind, name, mute_state)
-                console.print(table)
+                        muted = str(get_mute_state(cl, name)).lower()
+                    else:
+                        muted = ""
+                    rows.append([kind, name, muted])
+                print_tsv(["kind", "name", "muted"], rows)
             elif args.action == "show" or args.action == "get":
                 data = get_input_settings(cl, args.INPUT)
                 if args.PROPERTY:
@@ -712,16 +714,17 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
-                table = Table(title=f"Filters for {args.INPUT}")
-                table.add_column("Kind")
-                table.add_column("Name")
-                table.add_column("Enabled", justify="center")
-                for filter in data:
-                    kind = filter.get("filterKind")
-                    name = filter.get("filterName")
-                    enabled = "✅" if filter.get("filterEnabled") else "❌"
-                    table.add_row(kind, name, enabled)
-                console.print(table)
+                print_tsv(
+                    ["kind", "name", "enabled"],
+                    [
+                        [
+                            f.get("filterKind"),
+                            f.get("filterName"),
+                            str(f.get("filterEnabled")).lower(),
+                        ]
+                        for f in data
+                    ],
+                )
             elif args.action == "toggle":
                 res = toggle_filter(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
@@ -743,11 +746,7 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
-                table = Table(title="Hotkeys")
-                table.add_column("Name")
-                for hk in data:
-                    table.add_row(hk)
-                console.print(table)
+                print_tsv(["name"], [[hk] for hk in data])
             elif args.action == "trigger":
                 res = trigger_hotkey(cl, args.HOTKEY)
                 LOGGER.debug(res)
