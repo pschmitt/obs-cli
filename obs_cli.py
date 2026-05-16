@@ -526,9 +526,9 @@ def main():
                 res = switch_to_scene(cl, args.SCENE, exact=False)
                 LOGGER.debug(res)
             elif args.action == "screenshot":
-                if not args.raw and not args.output:
+                if not args.raw and not args.json and not args.output:
                     print(
-                        "ERROR: --output is required when --raw is not set",
+                        "ERROR: --output is required when --raw and --json are not set",
                         file=sys.stderr,
                     )
                     return 2
@@ -547,7 +547,9 @@ def main():
                     height=args.height,
                     compression_quality=args.compression_quality,
                 )
-                if args.raw:
+                if args.json:
+                    print_json(data={"format": fmt, "data": base64.b64encode(data).decode()})
+                elif args.raw:
                     sys.stdout.buffer.write(data)
                 else:
                     with open(args.output, "wb") as f:
@@ -615,9 +617,9 @@ def main():
                 res = hide_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
             elif args.action == "screenshot":
-                if not args.raw and not args.output:
+                if not args.raw and not args.json and not args.output:
                     print(
-                        "ERROR: --output is required when --raw is not set",
+                        "ERROR: --output is required when --raw and --json are not set",
                         file=sys.stderr,
                     )
                     return 2
@@ -635,7 +637,9 @@ def main():
                     height=args.height,
                     compression_quality=args.compression_quality,
                 )
-                if args.raw:
+                if args.json:
+                    print_json(data={"format": fmt, "data": base64.b64encode(data).decode()})
+                elif args.raw:
                     sys.stdout.buffer.write(data)
                 else:
                     with open(args.output, "wb") as f:
