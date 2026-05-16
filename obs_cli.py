@@ -496,6 +496,11 @@ def take_screenshot(cl, source, image_format="png", width=None, height=None, com
     return base64.b64decode(image_data)
 
 
+_COLUMN_STYLES = (
+    "cyan", "green", "magenta", "white", "yellow", "blue", "bright_black", "red",
+)
+
+
 def make_table(*headers):
     table = Table(
         box=None,
@@ -504,8 +509,8 @@ def make_table(*headers):
         padding=(0, 2, 0, 0),
         header_style="bold",
     )
-    for header in headers:
-        table.add_column(header.upper())
+    for i, header in enumerate(headers):
+        table.add_column(header.upper(), style=_COLUMN_STYLES[i % len(_COLUMN_STYLES)])
     return table
 
 
