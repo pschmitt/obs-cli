@@ -8,18 +8,17 @@ automate scene switching, source toggling, and more.
 This implementation of `obs-cli` is:
 
 - written in Python 3
-- powered by [rich](https://github.com/Textualize/rich) and
-[obsws-python](https://pypi.org/project/obsws-python/).
+- powered by [rich](https://github.com/Textualize/rich),
+  [rich-argparse](https://github.com/hamdanal/rich-argparse), and
+  [obsws-python](https://pypi.org/project/obsws-python/).
 
 ⚠️ Only the new OBS WebSocket API (v5) is supported!
 
 ## 💻 Installation
 
-You can install `obs-cli` using pip(x):
-
 ```shell
-# pipx
-pipx install obs-cli
+# uv (recommended)
+uv tool install obs-cli
 
 # pip
 pip install --user obs-cli
@@ -27,282 +26,187 @@ pip install --user obs-cli
 
 ## 🛠️ Usage
 
-Here's the general usage of `obs-cli`:
-
 ```shell
 obs-cli --help
 ```
 
-This will show you the available commands and options.
+Global flags (`-H`, `-P`, `-p`, `-j`, `-q`, `-D`) can be placed before or
+after the subcommand name. Subcommands also accept plural forms (`scenes`,
+`items`, `groups`, etc.) and default to `list` (or `status` for stateful
+commands) when no action is given.
+
+```shell
+obs-cli scenes               # same as: obs-cli scene list
+obs-cli items --json         # JSON output
+obs-cli --json scene list    # equivalent
+```
 
 ## 🌟 Features
 
 ### 🎞️ Scene Management
 
-You can manage scenes using the `scene` command:
-
 ```shell
 obs-cli scene --help
 ```
 
-For example, to switch to a scene named "Scene2":
-
 ```shell
-obs-cli scene switch "Scene2"
-```
-
-To list all scenes:
-
-```shell
+# List all scenes (INDEX / NAME / CURRENT columns)
 obs-cli scene list
-```
+obs-cli scenes               # plural alias
 
-To take a screenshot of a scene (defaults to the current scene):
+# Switch to a scene
+obs-cli scene switch "Scene2"
 
-```shell
+# Print the current scene name
+obs-cli scene current
+
+# Screenshot — current scene or a named one
 obs-cli scene screenshot -o scene.png
 obs-cli scene screenshot "Scene2" -o scene2.png
-obs-cli scene screenshot --raw > scene.png
+obs-cli scene screenshot --raw > scene.png   # raw bytes to stdout
+obs-cli scene screenshot --json              # base64-encoded JSON
 ```
 
 ### 📦 Item Management
-
-You can manage scene items using the `item` command:
 
 ```shell
 obs-cli item --help
 ```
 
-For example, to hide an item named "Item1" in a scene named "Scene2":
-
 ```shell
-obs-cli item hide --scene "Scene2" "Item1"
-```
-
-And to show it:
-
-```shell
-obs-cli item show --scene "Scene2" "Item1"
-```
-
-To list all items in a scene:
-
-```shell
+# List all items in the current (or a named) scene
+obs-cli item list
 obs-cli item list --scene "Scene2"
-```
+obs-cli items                # plural alias
 
-To take a screenshot of a source and save it to a file:
+# Show / hide / toggle a source
+obs-cli item show --scene "Scene2" "Item1"
+obs-cli item hide --scene "Scene2" "Item1"
+obs-cli item toggle "Item1"
 
-```shell
+# Screenshot a source
 obs-cli item screenshot "Webcam" -o webcam.png
-```
-
-To dump the raw image bytes to stdout (e.g. for piping):
-
-```shell
 obs-cli item screenshot "Webcam" --raw > webcam.png
+obs-cli item screenshot "Webcam" --json
+obs-cli item screenshot "Webcam" -f jpg -o webcam.jpg
 ```
 
 ### 📂 Group Management
-
-You can manage scene item groups using the `group` command:
 
 ```shell
 obs-cli group --help
 ```
 
-For example, to hide an group named "group1" in a scene named "Scene2":
-
 ```shell
-obs-cli group hide --scene "Scene2" "group1"
-```
-
-And to show it:
-
-```shell
-obs-cli group show --scene "Scene2" "group1"
-```
-
-To list all groups in a scene:
-
-```shell
+# List all groups in a scene
+obs-cli group list
 obs-cli group list --scene "Scene2"
+obs-cli groups               # plural alias
+
+# Show / hide / toggle a group
+obs-cli group show --scene "Scene2" "group1"
+obs-cli group hide --scene "Scene2" "group1"
+obs-cli group toggle "group1"
 ```
 
 ### 🎤 Input Management
-
-You can manage inputs using the `input` command:
 
 ```shell
 obs-cli input --help
 ```
 
-For example, to get the settings of an input named "Mic/Aux":
-
 ```shell
-obs-cli input get "Mic/Aux"
-```
-
-To set the device_id of a webcam input named "Webcam":
-
-```shell
-obs-cli input set "Webcam" device_id /dev/v4l/by-id/usb-Elgato_Elgato_Facecam_FW52K1A04919-video-index0
-```
-
-To list all inputs:
-
-```shell
+# List all inputs
 obs-cli input list
-```
+obs-cli inputs               # plural alias
 
-Mute/unmute or toggle the mute state of an input:
+# Show all settings for an input
+obs-cli input get "Mic/Aux"
 
-```shell
+# Get a single property
+obs-cli input get "Webcam" device_id
+
+# Set a property
+obs-cli input set "Webcam" device_id /dev/v4l/by-id/usb-Elgato_Elgato_Facecam_FW52K1A04919-video-index0
+
+# Mute / unmute / toggle
 obs-cli input mute "Mic/Aux"
 obs-cli input unmute "Mic/Aux"
 obs-cli input toggle-mute "Mic/Aux"
+obs-cli input is-muted "Mic/Aux"
 ```
 
 ### 🎨 Filter Management
-
-You can manage filters using the `filter` command:
 
 ```shell
 obs-cli filter --help
 ```
 
-For example, to enable a filter named "Filter1" on an input named "Mic/Aux":
-
 ```shell
-obs-cli filter enable "Mic/Aux" "Filter1"
-```
-
-And to disable it:
-
-```shell
-obs-cli filter disable "Mic/Aux" "Filter1"
-```
-
-To list all filters on an input:
-
-```shell
+# List filters on a source
 obs-cli filter list "Mic/Aux"
+obs-cli filters              # plural alias (current scene)
+
+# Enable / disable / toggle
+obs-cli filter enable  "Mic/Aux" "Filter1"
+obs-cli filter disable "Mic/Aux" "Filter1"
+obs-cli filter toggle  "Mic/Aux" "Filter1"
+
+# Check status (exits 0 if enabled, 1 if disabled)
+obs-cli filter status "Mic/Aux" "Filter1"
+obs-cli -q filter status "Mic/Aux" "Filter1"
 ```
 
 ### ⌨️ Hotkey Management
-
-You can manage hotkeys using the `hotkey` command:
 
 ```shell
 obs-cli hotkey --help
 ```
 
-For example, to trigger a hotkey named "Hotkey1":
-
 ```shell
-obs-cli hotkey trigger "Hotkey1"
-```
-
-To list all hotkeys:
-
-```shell
+# List all hotkeys
 obs-cli hotkey list
+obs-cli hotkeys              # plural alias
+
+# Trigger a hotkey
+obs-cli hotkey trigger "OBSBasic.StartStreaming"
 ```
 
-### 🎥 Virtual Camera Management
-
-You can manage the virtual camera using the `virtualcam` command:
-
-```shell
-obs-cli virtualcam --help
-```
-
-For example, to start the virtual camera:
-
-```shell
-obs-cli virtualcam start
-```
-
-To stop the virtual camera:
-
-```shell
-obs-cli virtualcam stop
-```
-
-To toggle the virtual camera:
-
-```shell
-obs-cli virtualcam toggle
-```
-
-To get the status of the virtual camera:
+### 🎥 Virtual Camera
 
 ```shell
 obs-cli virtualcam status
+obs-cli virtualcam start
+obs-cli virtualcam stop
+obs-cli virtualcam toggle
 ```
 
 ### 📡 Stream Management
 
-You can manage the stream using the `stream` command:
-
 ```shell
-obs-cli stream --help
-```
-
-For example, to start streaming:
-
-```shell
+obs-cli stream status
 obs-cli stream start
-```
-
-To stop streaming:
-
-```shell
 obs-cli stream stop
-```
-
-To toggle streaming:
-
-```shell
 obs-cli stream toggle
 ```
 
-To get the status of the stream:
-
-```shell
-obs-cli stream status
-```
-
-### 🎥 Record Management
-
-You can manage recording using the `record` command:
-
-```shell
-obs-cli record --help
-```
-
-For example, to start recording:
-
-```shell
-obs-cli record start
-```
-
-To stop recording:
-
-```shell
-obs-cli record stop
-```
-
-To toggle recording:
-
-```shell
-obs-cli record toggle
-```
-
-To get the status of the recording:
+### 📹 Recording
 
 ```shell
 obs-cli record status
+obs-cli record start
+obs-cli record stop
+obs-cli record toggle
+```
+
+### 🔁 Replay Buffer
+
+```shell
+obs-cli replay status
+obs-cli replay start
+obs-cli replay stop
+obs-cli replay toggle
+obs-cli replay save
 ```
 
 ## 📄 License
