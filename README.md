@@ -109,6 +109,34 @@ obs-cli group hide --scene "Scene2" "group1"
 obs-cli group toggle "group1"
 ```
 
+### 🎬 Source Management
+
+Sources are the underlying named resources (cameras, media files, browser
+sources, etc.) that exist independently of any scene. This differs from
+`item`, which is a source *instance* placed inside a specific scene.
+
+```shell
+obs-cli source --help
+```
+
+```shell
+# List all sources
+obs-cli source list
+obs-cli sources              # plural alias
+
+# Screenshot any source by name — no scene context needed
+obs-cli source screenshot "Nyan Cat" -o nyancat.png
+obs-cli source screenshot "Webcam" --raw > webcam.png
+obs-cli source screenshot "Webcam" --raw | feh -
+obs-cli source screenshot "Webcam" --json
+obs-cli source screenshot "Webcam" --width 320 -o thumb.png
+
+# Check whether a source is active and/or showing
+obs-cli source active "Webcam"
+obs-cli source active "Webcam" --json
+obs-cli -q source active "Webcam"  # exits 0 if active, 1 if not
+```
+
 ### 🎤 Input Management
 
 ```shell
