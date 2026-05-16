@@ -46,12 +46,19 @@ def parse_args():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Shared parent so subcommands also accept -j/--json after their name.
-    # argument_default=SUPPRESS means the subparser never writes a default for
-    # --json, so the main parser's value is preserved when the flag comes first.
-    _common = argparse.ArgumentParser(add_help=False, argument_default=argparse.SUPPRESS)
+    # argument_default=SUPPRESS means the subparser never writes a default
+    # for --json, preserving the main parser's value when the flag comes first.
+    _common = argparse.ArgumentParser(
+        add_help=False, argument_default=argparse.SUPPRESS
+    )
     _common.add_argument("-j", "--json", action="store_true")
 
-    scene_parser = subparsers.add_parser("scene", aliases=["scenes"], parents=[_common], formatter_class=RichHelpFormatter)
+    scene_parser = subparsers.add_parser(
+        "scene",
+        aliases=["scenes"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     scene_parser.add_argument(
         "-e", "--exact", action="store_true", default=False, help="Exact match"
     )
@@ -74,7 +81,7 @@ def parse_args():
         "-o",
         "--output",
         default=None,
-        help="Screenshot output file path (required for screenshot without --raw)",
+        help="Output file (required without --raw/--json)",
     )
     scene_parser.add_argument(
         "--raw",
@@ -86,7 +93,7 @@ def parse_args():
         "-f",
         "--format",
         default=None,
-        help="Screenshot image format: png, jpg, bmp (default: inferred from filename or png)",
+        help="Image format: png, jpg, bmp (default: from filename ext or png)",
     )
     scene_parser.add_argument(
         "--width", type=int, default=None, help="Screenshot width"
@@ -98,10 +105,15 @@ def parse_args():
         "--compression-quality",
         type=int,
         default=-1,
-        help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
+        help="Compression quality -1 to 100 (-1 = OBS default)",
     )
 
-    group_parser = subparsers.add_parser("group", aliases=["groups"], parents=[_common], formatter_class=RichHelpFormatter)
+    group_parser = subparsers.add_parser(
+        "group",
+        aliases=["groups"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     group_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
@@ -116,7 +128,12 @@ def parse_args():
         "group", nargs="?", help="group to interact with"
     )
 
-    item_parser = subparsers.add_parser("item", aliases=["items"], parents=[_common], formatter_class=RichHelpFormatter)
+    item_parser = subparsers.add_parser(
+        "item",
+        aliases=["items"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     item_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
@@ -132,7 +149,7 @@ def parse_args():
         "-o",
         "--output",
         default=None,
-        help="Screenshot output file path (required for screenshot without --raw)",
+        help="Output file (required without --raw/--json)",
     )
     item_parser.add_argument(
         "--raw",
@@ -144,7 +161,7 @@ def parse_args():
         "-f",
         "--format",
         default=None,
-        help="Screenshot image format: png, jpg, bmp (default: inferred from filename or png)",
+        help="Image format: png, jpg, bmp (default: from filename ext or png)",
     )
     item_parser.add_argument(
         "--width", type=int, default=None, help="Screenshot width"
@@ -156,10 +173,15 @@ def parse_args():
         "--compression-quality",
         type=int,
         default=-1,
-        help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
+        help="Compression quality -1 to 100 (-1 = OBS default)",
     )
 
-    input_parser = subparsers.add_parser("input", aliases=["inputs"], parents=[_common], formatter_class=RichHelpFormatter)
+    input_parser = subparsers.add_parser(
+        "input",
+        aliases=["inputs"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     input_parser.add_argument(
         "action",
         choices=[
@@ -180,7 +202,12 @@ def parse_args():
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
     input_parser.add_argument("VALUE", nargs="?", help="Property value")
 
-    filter_parser = subparsers.add_parser("filter", aliases=["filters"], parents=[_common], formatter_class=RichHelpFormatter)
+    filter_parser = subparsers.add_parser(
+        "filter",
+        aliases=["filters"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     filter_parser.add_argument(
         "action",
         choices=["list", "toggle", "enable", "disable", "status"],
@@ -191,7 +218,12 @@ def parse_args():
     filter_parser.add_argument("INPUT", nargs="?", help="Input name")
     filter_parser.add_argument("FILTER", nargs="?", help="Filter name")
 
-    hotkey_parser = subparsers.add_parser("hotkey", aliases=["hotkeys"], parents=[_common], formatter_class=RichHelpFormatter)
+    hotkey_parser = subparsers.add_parser(
+        "hotkey",
+        aliases=["hotkeys"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
     hotkey_parser.add_argument(
         "action",
         choices=["list", "trigger"],
@@ -201,7 +233,9 @@ def parse_args():
     )
     hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
 
-    virtualcam_parser = subparsers.add_parser("virtualcam", parents=[_common], formatter_class=RichHelpFormatter)
+    virtualcam_parser = subparsers.add_parser(
+        "virtualcam", parents=[_common], formatter_class=RichHelpFormatter
+    )
     virtualcam_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -210,7 +244,9 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    stream_parser = subparsers.add_parser("stream", parents=[_common], formatter_class=RichHelpFormatter)
+    stream_parser = subparsers.add_parser(
+        "stream", parents=[_common], formatter_class=RichHelpFormatter
+    )
     stream_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -219,7 +255,9 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    record_parser = subparsers.add_parser("record", parents=[_common], formatter_class=RichHelpFormatter)
+    record_parser = subparsers.add_parser(
+        "record", parents=[_common], formatter_class=RichHelpFormatter
+    )
     record_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -228,7 +266,9 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    replay_parser = subparsers.add_parser("replay", parents=[_common], formatter_class=RichHelpFormatter)
+    replay_parser = subparsers.add_parser(
+        "replay", parents=[_common], formatter_class=RichHelpFormatter
+    )
     replay_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle", "save"],
@@ -499,8 +539,19 @@ def record_toggle(cl):
     return cl.toggle_record()
 
 
-def take_screenshot(cl, source, image_format="png", width=None, height=None, compression_quality=-1):
-    payload = {"sourceName": source, "imageFormat": image_format, "imageCompressionQuality": compression_quality}
+def take_screenshot(
+    cl,
+    source,
+    image_format="png",
+    width=None,
+    height=None,
+    compression_quality=-1,
+):
+    payload = {
+        "sourceName": source,
+        "imageFormat": image_format,
+        "imageCompressionQuality": compression_quality,
+    }
     if width:
         payload["imageWidth"] = width
     if height:
@@ -517,7 +568,14 @@ _NA = Text("N/A", style="bright_black italic")
 
 
 _COLUMN_STYLES = (
-    "cyan", "green", "magenta", "white", "yellow", "blue", "bright_black", "red",
+    "cyan",
+    "green",
+    "magenta",
+    "white",
+    "yellow",
+    "blue",
+    "bright_black",
+    "red",
 )
 
 
@@ -530,7 +588,9 @@ def make_table(*headers):
         header_style="bold",
     )
     for i, header in enumerate(headers):
-        table.add_column(header.upper(), style=_COLUMN_STYLES[i % len(_COLUMN_STYLES)])
+        table.add_column(
+            header.upper(), style=_COLUMN_STYLES[i % len(_COLUMN_STYLES)]
+        )
     return table
 
 
@@ -550,8 +610,12 @@ def main():
         )
 
         _aliases = {
-            "scenes": "scene", "groups": "group", "items": "item",
-            "inputs": "input", "filters": "filter", "hotkeys": "hotkey",
+            "scenes": "scene",
+            "groups": "group",
+            "items": "item",
+            "inputs": "input",
+            "filters": "filter",
+            "hotkeys": "hotkey",
         }
         cmd = _aliases.get(args.command, args.command)
         if cmd == "scene":
@@ -565,12 +629,18 @@ def main():
                     return
                 current = res.current_program_scene_name
                 table = make_table("index", "name", "current")
-                for sc in sorted(res.scenes, key=lambda x: x.get("sceneIndex")):
+                for sc in sorted(
+                    res.scenes, key=lambda x: x.get("sceneIndex")
+                ):
                     is_current = sc.get("sceneName") == current
                     table.add_row(
                         str(sc.get("sceneIndex")),
                         sc.get("sceneName"),
-                        Text("true", style="bold green") if is_current else Text("false", style="bright_black"),
+                        (
+                            Text("true", style="bold green")
+                            if is_current
+                            else Text("false", style="bright_black")
+                        ),
                     )
                 console.print(table)
             elif args.action == "switch":
@@ -579,7 +649,7 @@ def main():
             elif args.action == "screenshot":
                 if not args.raw and not args.json and not args.output:
                     print(
-                        "ERROR: --output is required when --raw and --json are not set",
+                        "ERROR: --output required without --raw/--json",
                         file=sys.stderr,
                     )
                     return 2
@@ -599,7 +669,12 @@ def main():
                     compression_quality=args.compression_quality,
                 )
                 if args.json:
-                    json_out = json.dumps({"format": fmt, "data": base64.b64encode(data).decode()})
+                    json_out = json.dumps(
+                        {
+                            "format": fmt,
+                            "data": base64.b64encode(data).decode(),
+                        }
+                    )
                     if args.output:
                         with open(args.output, "w") as f:
                             f.write(json_out)
@@ -667,7 +742,7 @@ def main():
             elif args.action == "screenshot":
                 if not args.raw and not args.json and not args.output:
                     print(
-                        "ERROR: --output is required when --raw and --json are not set",
+                        "ERROR: --output required without --raw/--json",
                         file=sys.stderr,
                     )
                     return 2
@@ -686,7 +761,12 @@ def main():
                     compression_quality=args.compression_quality,
                 )
                 if args.json:
-                    json_out = json.dumps({"format": fmt, "data": base64.b64encode(data).decode()})
+                    json_out = json.dumps(
+                        {
+                            "format": fmt,
+                            "data": base64.b64encode(data).decode(),
+                        }
+                    )
                     if args.output:
                         with open(args.output, "w") as f:
                             f.write(json_out)
