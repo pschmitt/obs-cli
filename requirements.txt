@@ -1,7 +1,8 @@
-markdown-it-py==4.2.0
-mdurl==0.1.2
-obsws-python==1.8.0
-Pygments==2.20.0
-rich==15.0.0
-tomli==2.4.1
-websocket-client==1.9.0
+markdown-it-py>=4.0
+mdurl>=0.1
+obsws-python>=1.8.0
+Pygments>=2.0
+rich>=13.0
+rich-argparse>=1.0
+tomli>=2.0
+websocket-client>=1.0

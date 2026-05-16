@@ -14,10 +14,11 @@ from rich import print, print_json
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
+from rich_argparse import RichHelpFormatter
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=RichHelpFormatter)
     parser.add_argument("-D", "--debug", action="store_true", default=False)
     parser.add_argument("-q", "--quiet", action="store_true", default=False)
     parser.add_argument(
@@ -44,7 +45,7 @@ def parse_args():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    scene_parser = subparsers.add_parser("scene")
+    scene_parser = subparsers.add_parser("scene", formatter_class=RichHelpFormatter)
     scene_parser.add_argument(
         "-e", "--exact", action="store_true", default=False, help="Exact match"
     )
@@ -93,7 +94,7 @@ def parse_args():
         help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
     )
 
-    group_parser = subparsers.add_parser("group")
+    group_parser = subparsers.add_parser("group", formatter_class=RichHelpFormatter)
     group_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
@@ -107,7 +108,7 @@ def parse_args():
         "group", nargs="?", help="group to interact with"
     )
 
-    item_parser = subparsers.add_parser("item")
+    item_parser = subparsers.add_parser("item", formatter_class=RichHelpFormatter)
     item_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
@@ -149,7 +150,7 @@ def parse_args():
         help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
     )
 
-    input_parser = subparsers.add_parser("input")
+    input_parser = subparsers.add_parser("input", formatter_class=RichHelpFormatter)
     input_parser.add_argument(
         "action",
         choices=[
@@ -169,7 +170,7 @@ def parse_args():
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
     input_parser.add_argument("VALUE", nargs="?", help="Property value")
 
-    filter_parser = subparsers.add_parser("filter")
+    filter_parser = subparsers.add_parser("filter", formatter_class=RichHelpFormatter)
     filter_parser.add_argument(
         "action",
         choices=["list", "toggle", "enable", "disable", "status"],
@@ -179,7 +180,7 @@ def parse_args():
     filter_parser.add_argument("INPUT", nargs="?", help="Input name")
     filter_parser.add_argument("FILTER", nargs="?", help="Filter name")
 
-    hotkey_parser = subparsers.add_parser("hotkey")
+    hotkey_parser = subparsers.add_parser("hotkey", formatter_class=RichHelpFormatter)
     hotkey_parser.add_argument(
         "action",
         choices=["list", "trigger"],
@@ -188,7 +189,7 @@ def parse_args():
     )
     hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
 
-    virtualcam_parser = subparsers.add_parser("virtualcam")
+    virtualcam_parser = subparsers.add_parser("virtualcam", formatter_class=RichHelpFormatter)
     virtualcam_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -196,7 +197,7 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    stream_parser = subparsers.add_parser("stream")
+    stream_parser = subparsers.add_parser("stream", formatter_class=RichHelpFormatter)
     stream_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -204,7 +205,7 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    record_parser = subparsers.add_parser("record")
+    record_parser = subparsers.add_parser("record", formatter_class=RichHelpFormatter)
     record_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
@@ -212,7 +213,7 @@ def parse_args():
         help="status/start/stop/toggle",
     )
 
-    replay_parser = subparsers.add_parser("replay")
+    replay_parser = subparsers.add_parser("replay", formatter_class=RichHelpFormatter)
     replay_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle", "save"],

@@ -62,6 +62,7 @@
           propagatedBuildInputs = with pyPkgs; [
             obswsPython
             rich
+            rich-argparse
           ];
           pythonImportsCheck = [ "obs_cli" ];
           meta = with pkgs.lib; {

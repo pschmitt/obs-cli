@@ -17,7 +17,8 @@ classifiers = [
 ]
 dependencies = [
   "obsws-python",
-  "rich"
+  "rich>=13.0",
+  "rich-argparse>=1.0",
 ]
 version = "0.8.3"
 
