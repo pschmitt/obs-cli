@@ -57,6 +57,14 @@ To list all scenes:
 obs-cli scene list
 ```
 
+To take a screenshot of a scene (defaults to the current scene):
+
+```shell
+obs-cli scene screenshot -o scene.png
+obs-cli scene screenshot "Scene2" -o scene2.png
+obs-cli scene screenshot --raw > scene.png
+```
+
 ### 📦 Item Management
 
 You can manage scene items using the `item` command:
@@ -81,6 +89,18 @@ To list all items in a scene:
 
 ```shell
 obs-cli item list --scene "Scene2"
+```
+
+To take a screenshot of a source and save it to a file:
+
+```shell
+obs-cli item screenshot "Webcam" -o webcam.png
+```
+
+To dump the raw image bytes to stdout (e.g. for piping):
+
+```shell
+obs-cli item screenshot "Webcam" --raw > webcam.png
 ```
 
 ### 📂 Group Management

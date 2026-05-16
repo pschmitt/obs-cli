@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import argparse
+import base64
 import json
 import logging
 import os
@@ -56,11 +57,41 @@ def parse_args():
     )
     scene_parser.add_argument(
         "action",
-        choices=["list", "switch", "current"],
+        choices=["list", "switch", "current", "screenshot"],
         default="current",
-        help="list/switch/current",
+        help="list/switch/current/screenshot",
     )
     scene_parser.add_argument("SCENE", nargs="?", help="Scene name")
+    scene_parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Screenshot output file path (required for screenshot without --raw)",
+    )
+    scene_parser.add_argument(
+        "--raw",
+        action="store_true",
+        default=False,
+        help="Write raw screenshot bytes to stdout",
+    )
+    scene_parser.add_argument(
+        "-f",
+        "--format",
+        default=None,
+        help="Screenshot image format: png, jpg, bmp (default: inferred from filename or png)",
+    )
+    scene_parser.add_argument(
+        "--width", type=int, default=None, help="Screenshot width"
+    )
+    scene_parser.add_argument(
+        "--height", type=int, default=None, help="Screenshot height"
+    )
+    scene_parser.add_argument(
+        "--compression-quality",
+        type=int,
+        default=-1,
+        help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
+    )
 
     group_parser = subparsers.add_parser("group")
     group_parser.add_argument(
@@ -82,11 +113,41 @@ def parse_args():
     )
     item_parser.add_argument(
         "action",
-        choices=["list", "show", "hide", "toggle"],
+        choices=["list", "show", "hide", "toggle", "screenshot"],
         default="toggle",
-        help="show/hide/toggle",
+        help="show/hide/toggle/screenshot",
     )
     item_parser.add_argument("ITEM", nargs="?", help="Item to interact with")
+    item_parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Screenshot output file path (required for screenshot without --raw)",
+    )
+    item_parser.add_argument(
+        "--raw",
+        action="store_true",
+        default=False,
+        help="Write raw screenshot bytes to stdout",
+    )
+    item_parser.add_argument(
+        "-f",
+        "--format",
+        default=None,
+        help="Screenshot image format: png, jpg, bmp (default: inferred from filename or png)",
+    )
+    item_parser.add_argument(
+        "--width", type=int, default=None, help="Screenshot width"
+    )
+    item_parser.add_argument(
+        "--height", type=int, default=None, help="Screenshot height"
+    )
+    item_parser.add_argument(
+        "--compression-quality",
+        type=int,
+        default=-1,
+        help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
+    )
 
     input_parser = subparsers.add_parser("input")
     input_parser.add_argument(
@@ -421,6 +482,20 @@ def record_toggle(cl):
     return cl.toggle_record()
 
 
+def take_screenshot(cl, source, image_format="png", width=None, height=None, compression_quality=-1):
+    payload = {"sourceName": source, "imageFormat": image_format, "imageCompressionQuality": compression_quality}
+    if width:
+        payload["imageWidth"] = width
+    if height:
+        payload["imageHeight"] = height
+    res = cl.send("GetSourceScreenshot", payload)
+    image_data = res.image_data
+    # Strip data URI prefix (e.g. "data:image/png;base64,")
+    if "," in image_data:
+        image_data = image_data.split(",", 1)[1]
+    return base64.b64decode(image_data)
+
+
 def main():
     console = Console()
     logging.basicConfig()
@@ -449,6 +524,33 @@ def main():
             elif args.action == "switch":
                 res = switch_to_scene(cl, args.SCENE, exact=False)
                 LOGGER.debug(res)
+            elif args.action == "screenshot":
+                if not args.raw and not args.output:
+                    print(
+                        "ERROR: --output is required when --raw is not set",
+                        file=sys.stderr,
+                    )
+                    return 2
+                scene = args.SCENE or get_current_scene_name(cl)
+                fmt = args.format
+                if not fmt and args.output:
+                    ext = os.path.splitext(args.output)[1].lstrip(".")
+                    if ext:
+                        fmt = ext.lower()
+                fmt = fmt or "png"
+                data = take_screenshot(
+                    cl,
+                    scene,
+                    image_format=fmt,
+                    width=args.width,
+                    height=args.height,
+                    compression_quality=args.compression_quality,
+                )
+                if args.raw:
+                    sys.stdout.buffer.write(data)
+                else:
+                    with open(args.output, "wb") as f:
+                        f.write(data)
             else:
                 print(get_current_scene_name(cl))
 
@@ -511,6 +613,32 @@ def main():
             elif args.action == "hide":
                 res = hide_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
+            elif args.action == "screenshot":
+                if not args.raw and not args.output:
+                    print(
+                        "ERROR: --output is required when --raw is not set",
+                        file=sys.stderr,
+                    )
+                    return 2
+                fmt = args.format
+                if not fmt and args.output:
+                    ext = os.path.splitext(args.output)[1].lstrip(".")
+                    if ext:
+                        fmt = ext.lower()
+                fmt = fmt or "png"
+                data = take_screenshot(
+                    cl,
+                    args.ITEM,
+                    image_format=fmt,
+                    width=args.width,
+                    height=args.height,
+                    compression_quality=args.compression_quality,
+                )
+                if args.raw:
+                    sys.stdout.buffer.write(data)
+                else:
+                    with open(args.output, "wb") as f:
+                        f.write(data)
 
         elif cmd == "input":
             if args.action == "list":
