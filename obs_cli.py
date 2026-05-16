@@ -45,7 +45,13 @@ def parse_args():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    scene_parser = subparsers.add_parser("scene", formatter_class=RichHelpFormatter)
+    # Shared parent so subcommands also accept -j/--json after their name.
+    # argument_default=SUPPRESS means the subparser never writes a default for
+    # --json, so the main parser's value is preserved when the flag comes first.
+    _common = argparse.ArgumentParser(add_help=False, argument_default=argparse.SUPPRESS)
+    _common.add_argument("-j", "--json", action="store_true")
+
+    scene_parser = subparsers.add_parser("scene", aliases=["scenes"], parents=[_common], formatter_class=RichHelpFormatter)
     scene_parser.add_argument(
         "-e", "--exact", action="store_true", default=False, help="Exact match"
     )
@@ -59,7 +65,8 @@ def parse_args():
     scene_parser.add_argument(
         "action",
         choices=["list", "switch", "current", "screenshot"],
-        default="current",
+        default="list",
+        nargs="?",
         help="list/switch/current/screenshot",
     )
     scene_parser.add_argument("SCENE", nargs="?", help="Scene name")
@@ -94,29 +101,31 @@ def parse_args():
         help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
     )
 
-    group_parser = subparsers.add_parser("group", formatter_class=RichHelpFormatter)
+    group_parser = subparsers.add_parser("group", aliases=["groups"], parents=[_common], formatter_class=RichHelpFormatter)
     group_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
     group_parser.add_argument(
         "action",
         choices=["list", "show", "hide", "toggle"],
-        default="toggle",
-        help="show/hide/toggle",
+        default="list",
+        nargs="?",
+        help="list/show/hide/toggle",
     )
     group_parser.add_argument(
         "group", nargs="?", help="group to interact with"
     )
 
-    item_parser = subparsers.add_parser("item", formatter_class=RichHelpFormatter)
+    item_parser = subparsers.add_parser("item", aliases=["items"], parents=[_common], formatter_class=RichHelpFormatter)
     item_parser.add_argument(
         "-s", "--scene", required=False, help="Scene name (default: current)"
     )
     item_parser.add_argument(
         "action",
         choices=["list", "show", "hide", "toggle", "screenshot"],
-        default="toggle",
-        help="show/hide/toggle/screenshot",
+        default="list",
+        nargs="?",
+        help="list/show/hide/toggle/screenshot",
     )
     item_parser.add_argument("ITEM", nargs="?", help="Item to interact with")
     item_parser.add_argument(
@@ -150,7 +159,7 @@ def parse_args():
         help="Screenshot compression quality -1 to 100 (default: -1, OBS default)",
     )
 
-    input_parser = subparsers.add_parser("input", formatter_class=RichHelpFormatter)
+    input_parser = subparsers.add_parser("input", aliases=["inputs"], parents=[_common], formatter_class=RichHelpFormatter)
     input_parser.add_argument(
         "action",
         choices=[
@@ -163,61 +172,68 @@ def parse_args():
             "toggle-mute",
             "is-muted",
         ],
-        default="show",
+        default="list",
+        nargs="?",
         help="list/show/get/set/mute/unmute/toggle-mute/is-muted",
     )
     input_parser.add_argument("INPUT", nargs="?", help="Input name")
     input_parser.add_argument("PROPERTY", nargs="?", help="Property name")
     input_parser.add_argument("VALUE", nargs="?", help="Property value")
 
-    filter_parser = subparsers.add_parser("filter", formatter_class=RichHelpFormatter)
+    filter_parser = subparsers.add_parser("filter", aliases=["filters"], parents=[_common], formatter_class=RichHelpFormatter)
     filter_parser.add_argument(
         "action",
         choices=["list", "toggle", "enable", "disable", "status"],
         default="list",
+        nargs="?",
         help="list/toggle/enable/disable/status",
     )
     filter_parser.add_argument("INPUT", nargs="?", help="Input name")
     filter_parser.add_argument("FILTER", nargs="?", help="Filter name")
 
-    hotkey_parser = subparsers.add_parser("hotkey", formatter_class=RichHelpFormatter)
+    hotkey_parser = subparsers.add_parser("hotkey", aliases=["hotkeys"], parents=[_common], formatter_class=RichHelpFormatter)
     hotkey_parser.add_argument(
         "action",
         choices=["list", "trigger"],
         default="list",
+        nargs="?",
         help="list/trigger",
     )
     hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
 
-    virtualcam_parser = subparsers.add_parser("virtualcam", formatter_class=RichHelpFormatter)
+    virtualcam_parser = subparsers.add_parser("virtualcam", parents=[_common], formatter_class=RichHelpFormatter)
     virtualcam_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
         default="status",
+        nargs="?",
         help="status/start/stop/toggle",
     )
 
-    stream_parser = subparsers.add_parser("stream", formatter_class=RichHelpFormatter)
+    stream_parser = subparsers.add_parser("stream", parents=[_common], formatter_class=RichHelpFormatter)
     stream_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
         default="status",
+        nargs="?",
         help="status/start/stop/toggle",
     )
 
-    record_parser = subparsers.add_parser("record", formatter_class=RichHelpFormatter)
+    record_parser = subparsers.add_parser("record", parents=[_common], formatter_class=RichHelpFormatter)
     record_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle"],
         default="status",
+        nargs="?",
         help="status/start/stop/toggle",
     )
 
-    replay_parser = subparsers.add_parser("replay", formatter_class=RichHelpFormatter)
+    replay_parser = subparsers.add_parser("replay", parents=[_common], formatter_class=RichHelpFormatter)
     replay_parser.add_argument(
         "action",
         choices=["status", "start", "stop", "toggle", "save"],
         default="status",
+        nargs="?",
         help="status/start/stop/toggle",
     )
 
@@ -533,13 +549,20 @@ def main():
             password=args.password,
         )
 
-        cmd = args.command
+        _aliases = {
+            "scenes": "scene", "groups": "group", "items": "item",
+            "inputs": "input", "filters": "filter", "hotkeys": "hotkey",
+        }
+        cmd = _aliases.get(args.command, args.command)
         if cmd == "scene":
             if args.action == "current":
                 print(get_current_scene_name(cl))
             elif args.action == "list":
                 res = cl.get_scene_list()
                 LOGGER.debug(res)
+                if args.json:
+                    print_json(data=res.scenes)
+                    return
                 current = res.current_program_scene_name
                 table = make_table("index", "name", "current")
                 for sc in sorted(res.scenes, key=lambda x: x.get("sceneIndex")):
@@ -587,8 +610,6 @@ def main():
                 else:
                     with open(args.output, "wb") as f:
                         f.write(data)
-            else:
-                print(get_current_scene_name(cl))
 
         elif cmd == "group":
             scene = args.scene or get_current_scene_name(cl)
