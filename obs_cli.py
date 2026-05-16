@@ -543,10 +543,11 @@ def main():
                 current = res.current_program_scene_name
                 table = make_table("index", "name", "current")
                 for sc in sorted(res.scenes, key=lambda x: x.get("sceneIndex")):
+                    is_current = sc.get("sceneName") == current
                     table.add_row(
                         str(sc.get("sceneIndex")),
                         sc.get("sceneName"),
-                        str(sc.get("sceneName") == current).lower(),
+                        Text("true", style="bold green") if is_current else Text("false", style="bright_black"),
                     )
                 console.print(table)
             elif args.action == "switch":
