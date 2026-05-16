@@ -13,6 +13,7 @@ import obsws_python as obs
 from rich import print, print_json
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 from rich_argparse import RichHelpFormatter
 
 
@@ -496,6 +497,9 @@ def take_screenshot(cl, source, image_format="png", width=None, height=None, com
     return base64.b64decode(image_data)
 
 
+_NA = Text("N/A", style="bright_black italic")
+
+
 _COLUMN_STYLES = (
     "cyan", "green", "magenta", "white", "yellow", "blue", "bright_black", "red",
 )
@@ -621,9 +625,10 @@ def main():
 
                 table = make_table("id", "group", "name", "enabled")
                 for item in data:
+                    group = (item.get("parentGroup") or {}).get("sourceName")
                     table.add_row(
                         str(item.get("sceneItemId")),
-                        (item.get("parentGroup") or {}).get("sourceName", ""),
+                        group or _NA,
                         item.get("sourceName"),
                         str(item.get("sceneItemEnabled")).lower(),
                     )
@@ -686,7 +691,7 @@ def main():
                     if kind in ["ffmpeg_source"] or "capture" in kind:
                         muted = str(get_mute_state(cl, name)).lower()
                     else:
-                        muted = ""
+                        muted = _NA
                     table.add_row(kind, name, muted)
                 console.print(table)
             elif args.action == "show" or args.action == "get":
