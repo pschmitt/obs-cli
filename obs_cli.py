@@ -534,7 +534,7 @@ def main():
                     return 2
                 scene = args.SCENE or get_current_scene_name(cl)
                 fmt = args.format
-                if not fmt and args.output:
+                if not fmt and args.output and not args.json:
                     ext = os.path.splitext(args.output)[1].lstrip(".")
                     if ext:
                         fmt = ext.lower()
@@ -548,7 +548,12 @@ def main():
                     compression_quality=args.compression_quality,
                 )
                 if args.json:
-                    print_json(data={"format": fmt, "data": base64.b64encode(data).decode()})
+                    json_out = json.dumps({"format": fmt, "data": base64.b64encode(data).decode()})
+                    if args.output:
+                        with open(args.output, "w") as f:
+                            f.write(json_out)
+                    else:
+                        print_json(json_out)
                 elif args.raw:
                     sys.stdout.buffer.write(data)
                 else:
@@ -624,7 +629,7 @@ def main():
                     )
                     return 2
                 fmt = args.format
-                if not fmt and args.output:
+                if not fmt and args.output and not args.json:
                     ext = os.path.splitext(args.output)[1].lstrip(".")
                     if ext:
                         fmt = ext.lower()
@@ -638,7 +643,12 @@ def main():
                     compression_quality=args.compression_quality,
                 )
                 if args.json:
-                    print_json(data={"format": fmt, "data": base64.b64encode(data).decode()})
+                    json_out = json.dumps({"format": fmt, "data": base64.b64encode(data).decode()})
+                    if args.output:
+                        with open(args.output, "w") as f:
+                            f.write(json_out)
+                    else:
+                        print_json(json_out)
                 elif args.raw:
                     sys.stdout.buffer.write(data)
                 else:
