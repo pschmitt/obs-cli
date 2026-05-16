@@ -12,6 +12,7 @@ import sys
 import obsws_python as obs
 from rich import print, print_json
 from rich.console import Console
+from rich.table import Table
 from rich_argparse import RichHelpFormatter
 
 
@@ -495,10 +496,17 @@ def take_screenshot(cl, source, image_format="png", width=None, height=None, com
     return base64.b64decode(image_data)
 
 
-def print_tsv(headers, rows):
-    sys.stdout.write("\t".join(h.upper() for h in headers) + "\n")
-    for row in rows:
-        sys.stdout.write("\t".join("" if c is None else str(c) for c in row) + "\n")
+def make_table(*headers):
+    table = Table(
+        box=None,
+        show_edge=False,
+        pad_edge=False,
+        padding=(0, 2, 0, 0),
+        header_style="bold",
+    )
+    for header in headers:
+        table.add_column(header.upper())
+    return table
 
 
 def main():
@@ -523,10 +531,15 @@ def main():
             elif args.action == "list":
                 res = cl.get_scene_list()
                 LOGGER.debug(res)
-                print_tsv(
-                    ["name"],
-                    [[x.get("sceneName")] for x in sorted(res.scenes, key=lambda x: x.get("sceneName"))],
-                )
+                current = res.current_program_scene_name
+                table = make_table("index", "name", "current")
+                for sc in sorted(res.scenes, key=lambda x: x.get("sceneIndex")):
+                    table.add_row(
+                        str(sc.get("sceneIndex")),
+                        sc.get("sceneName"),
+                        str(sc.get("sceneName") == current).lower(),
+                    )
+                console.print(table)
             elif args.action == "switch":
                 res = switch_to_scene(cl, args.SCENE, exact=False)
                 LOGGER.debug(res)
@@ -575,17 +588,14 @@ def main():
                     print_json(data=data)
                     return
 
-                print_tsv(
-                    ["id", "name", "enabled"],
-                    [
-                        [
-                            group.get("sceneItemId"),
-                            group.get("sourceName"),
-                            str(group.get("sceneItemEnabled")).lower(),
-                        ]
-                        for group in data
-                    ],
-                )
+                table = make_table("id", "name", "enabled")
+                for group in data:
+                    table.add_row(
+                        str(group.get("sceneItemId")),
+                        group.get("sourceName"),
+                        str(group.get("sceneItemEnabled")).lower(),
+                    )
+                console.print(table)
             elif args.action == "toggle":
                 res = toggle_item(cl, args.group, scene=scene, is_group=True)
                 LOGGER.debug(res)
@@ -604,18 +614,15 @@ def main():
                     print_json(data=data)
                     return
 
-                print_tsv(
-                    ["id", "group", "name", "enabled"],
-                    [
-                        [
-                            item.get("sceneItemId"),
-                            (item.get("parentGroup") or {}).get("sourceName", ""),
-                            item.get("sourceName"),
-                            str(item.get("sceneItemEnabled")).lower(),
-                        ]
-                        for item in data
-                    ],
-                )
+                table = make_table("id", "group", "name", "enabled")
+                for item in data:
+                    table.add_row(
+                        str(item.get("sceneItemId")),
+                        (item.get("parentGroup") or {}).get("sourceName", ""),
+                        item.get("sourceName"),
+                        str(item.get("sceneItemEnabled")).lower(),
+                    )
+                console.print(table)
             elif args.action == "toggle":
                 res = toggle_item(cl, item=args.ITEM, scene=scene)
                 LOGGER.debug(res)
@@ -666,7 +673,7 @@ def main():
                     print_json(data=data)
                     return
 
-                rows = []
+                table = make_table("kind", "name", "muted")
                 for input in data:
                     kind = input.get("inputKind")
                     name = input.get("inputName")
@@ -675,8 +682,8 @@ def main():
                         muted = str(get_mute_state(cl, name)).lower()
                     else:
                         muted = ""
-                    rows.append([kind, name, muted])
-                print_tsv(["kind", "name", "muted"], rows)
+                    table.add_row(kind, name, muted)
+                console.print(table)
             elif args.action == "show" or args.action == "get":
                 data = get_input_settings(cl, args.INPUT)
                 if args.PROPERTY:
@@ -714,17 +721,14 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
-                print_tsv(
-                    ["kind", "name", "enabled"],
-                    [
-                        [
-                            f.get("filterKind"),
-                            f.get("filterName"),
-                            str(f.get("filterEnabled")).lower(),
-                        ]
-                        for f in data
-                    ],
-                )
+                table = make_table("kind", "name", "enabled")
+                for f in data:
+                    table.add_row(
+                        f.get("filterKind"),
+                        f.get("filterName"),
+                        str(f.get("filterEnabled")).lower(),
+                    )
+                console.print(table)
             elif args.action == "toggle":
                 res = toggle_filter(cl, args.INPUT, args.FILTER)
                 LOGGER.debug(res)
@@ -746,7 +750,10 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
-                print_tsv(["name"], [[hk] for hk in data])
+                table = make_table("name")
+                for hk in data:
+                    table.add_row(hk)
+                console.print(table)
             elif args.action == "trigger":
                 res = trigger_hotkey(cl, args.HOTKEY)
                 LOGGER.debug(res)
