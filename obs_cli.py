@@ -233,6 +233,51 @@ def parse_args():
     )
     hotkey_parser.add_argument("HOTKEY", nargs="?", help="Hotkey name")
 
+    source_parser = subparsers.add_parser(
+        "source",
+        aliases=["sources"],
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
+    source_parser.add_argument(
+        "action",
+        choices=["list", "screenshot", "active"],
+        default="list",
+        nargs="?",
+        help="list/screenshot/active",
+    )
+    source_parser.add_argument("SOURCE", nargs="?", help="Source name")
+    source_parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Output file (required without --raw/--json)",
+    )
+    source_parser.add_argument(
+        "--raw",
+        action="store_true",
+        default=False,
+        help="Write raw screenshot bytes to stdout",
+    )
+    source_parser.add_argument(
+        "-f",
+        "--format",
+        default=None,
+        help="Image format: png, jpg, bmp (default: from filename ext or png)",
+    )
+    source_parser.add_argument(
+        "--width", type=int, default=None, help="Screenshot width"
+    )
+    source_parser.add_argument(
+        "--height", type=int, default=None, help="Screenshot height"
+    )
+    source_parser.add_argument(
+        "--compression-quality",
+        type=int,
+        default=-1,
+        help="Compression quality -1 to 100 (-1 = OBS default)",
+    )
+
     virtualcam_parser = subparsers.add_parser(
         "virtualcam", parents=[_common], formatter_class=RichHelpFormatter
     )
@@ -539,6 +584,11 @@ def record_toggle(cl):
     return cl.toggle_record()
 
 
+def source_active(cl, source):
+    res = cl.send("GetSourceActive", {"sourceName": source}, raw=True)
+    return res.get("videoActive", False), res.get("videoShowing", False)
+
+
 def take_screenshot(
     cl,
     source,
@@ -616,6 +666,7 @@ def main():
             "inputs": "input",
             "filters": "filter",
             "hotkeys": "hotkey",
+            "sources": "source",
         }
         cmd = _aliases.get(args.command, args.command)
         if cmd == "scene":
@@ -869,6 +920,78 @@ def main():
             elif args.action == "trigger":
                 res = trigger_hotkey(cl, args.HOTKEY)
                 LOGGER.debug(res)
+
+        elif cmd == "source":
+            if args.action == "list":
+                data = get_inputs(cl)
+                if args.json:
+                    print_json(data=data)
+                    return
+                table = make_table("kind", "name")
+                for src in data:
+                    table.add_row(
+                        src.get("inputKind"),
+                        src.get("inputName"),
+                    )
+                console.print(table)
+            elif args.action == "screenshot":
+                if not args.raw and not args.json and not args.output:
+                    print(
+                        "ERROR: --output required without --raw/--json",
+                        file=sys.stderr,
+                    )
+                    return 2
+                fmt = args.format
+                if not fmt and args.output and not args.json:
+                    ext = os.path.splitext(args.output)[1].lstrip(".")
+                    if ext:
+                        fmt = ext.lower()
+                fmt = fmt or "png"
+                data = take_screenshot(
+                    cl,
+                    args.SOURCE,
+                    image_format=fmt,
+                    width=args.width,
+                    height=args.height,
+                    compression_quality=args.compression_quality,
+                )
+                if args.json:
+                    json_out = json.dumps(
+                        {
+                            "format": fmt,
+                            "data": base64.b64encode(data).decode(),
+                        }
+                    )
+                    if args.output:
+                        with open(args.output, "w") as f:
+                            f.write(json_out)
+                    else:
+                        print_json(json_out)
+                elif args.raw:
+                    sys.stdout.buffer.write(data)
+                else:
+                    with open(args.output, "wb") as f:
+                        f.write(data)
+            elif args.action == "active":
+                active, showing = source_active(cl, args.SOURCE)
+                if args.json:
+                    print_json(
+                        data={"active": active, "showing": showing}
+                    )
+                    return
+                if args.quiet:
+                    sys.exit(0 if active else 1)
+                table = make_table("source", "active", "showing")
+                table.add_row(
+                    args.SOURCE,
+                    Text("true", style="bold green")
+                    if active
+                    else Text("false", style="bright_black"),
+                    Text("true", style="bold green")
+                    if showing
+                    else Text("false", style="bright_black"),
+                )
+                console.print(table)
 
         elif cmd == "virtualcam":
             if args.action == "status":
