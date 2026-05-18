@@ -329,17 +329,40 @@ class ObsItemNotFoundException(ValueError):
     pass
 
 
+class ObsSceneNotFoundException(ValueError):
+    pass
+
+
+def get_scene_names(cl):
+    return sorted(
+        (scene.get("sceneName") for scene in cl.get_scene_list().scenes)
+    )
+
+
 def switch_to_scene(cl, scene, exact=False, ignorecase=True):
+    if not scene:
+        raise ValueError("Missing scene name")
+
     regex = re.compile(
-        f"^{scene}$" if exact else scene,
+        (
+            f"^{re.escape(scene)}$"
+            if exact
+            else re.escape(scene)
+        ),
         re.IGNORECASE if ignorecase else re.NOFLAG,
     )
-    for sc in sorted(
-        cl.get_scene_list().scenes, key=lambda x: x.get("sceneName")
-    ):
-        if re.search(regex, sc.get("sceneName")):
-            cl.set_current_program_scene(sc.get("sceneName"))
+    scene_names = get_scene_names(cl)
+    for scene_name in scene_names:
+        if re.search(regex, scene_name):
+            cl.set_current_program_scene(scene_name)
             return True
+
+    available_scenes = "\n".join(
+        f"  - '{name}'" for name in scene_names
+    )
+    raise ObsSceneNotFoundException(
+        f"Scene not found: '{scene}'\nAvailable scenes:\n{available_scenes}"
+    )
 
 
 def get_items(
@@ -644,8 +667,13 @@ def make_table(*headers):
     return table
 
 
+def print_error(console, message):
+    console.print(f"[bold red]ERROR:[/bold red] {message}")
+
+
 def main():
     console = Console()
+    error_console = Console(stderr=True)
     logging.basicConfig()
 
     args = parse_args()
@@ -695,6 +723,9 @@ def main():
                     )
                 console.print(table)
             elif args.action == "switch":
+                if not args.SCENE:
+                    print_error(error_console, "missing scene name")
+                    return 2
                 res = switch_to_scene(cl, args.SCENE, exact=False)
                 LOGGER.debug(res)
             elif args.action == "screenshot":
@@ -1066,7 +1097,10 @@ def main():
 
         return 0
     except ObsItemNotFoundException as ecp:
-        print(f"ERROR {ecp}", file=sys.stderr)
+        print_error(error_console, str(ecp))
+        return 1
+    except ObsSceneNotFoundException as ecp:
+        print_error(error_console, str(ecp))
         return 1
     except Exception:
         console.print_exception(show_locals=True)
