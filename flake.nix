@@ -51,7 +51,7 @@
 
         obsCli = pyPkgs.buildPythonApplication {
           pname = "obs-cli";
-          version = "0.9.3";
+          version = "0.9.4";
           src = ./.;
           pyproject = true;
           nativeBuildInputs = with pyPkgs; [

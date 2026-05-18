@@ -20,7 +20,7 @@ dependencies = [
   "rich>=13.0",
   "rich-argparse>=1.0",
 ]
-version = "0.9.3"
+version = "0.9.4"
 
 [project.urls]
 Homepage = "https://github.com/pschmitt/obs-cli"
