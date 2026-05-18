@@ -12,7 +12,9 @@ from importlib import metadata
 
 import obsws_python as obs
 from rich import print, print_json
+from rich.columns import Columns
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich_argparse import RichHelpFormatter
@@ -40,6 +42,81 @@ def get_version():
         return metadata.version("obs-cli")
     except metadata.PackageNotFoundError as exc:
         raise RuntimeError("Could not determine obs-cli version") from exc
+
+
+def response_to_dict(data):
+    if data is None:
+        return {}
+
+    attrs = getattr(data, "attrs", None)
+    if callable(attrs):
+        return {attr: getattr(data, attr) for attr in attrs()}
+
+    if isinstance(data, dict):
+        return data
+
+    return {}
+
+
+def format_fps(video):
+    numerator = video.get("fps_numerator")
+    denominator = video.get("fps_denominator")
+
+    if numerator is None or denominator in (None, 0):
+        return _NA
+
+    fps = numerator / denominator
+    return f"{fps:.3f}".rstrip("0").rstrip(".")
+
+
+def get_obs_info(cl):
+    version = response_to_dict(cl.get_version())
+    stats = response_to_dict(cl.get_stats())
+    video = response_to_dict(cl.get_video_settings())
+    studio_mode = response_to_dict(cl.get_studio_mode_enabled())
+
+    return {
+        "obs": {
+            "version": version.get("obs_version"),
+            "websocket_version": version.get("obs_web_socket_version"),
+            "rpc_version": version.get("rpc_version"),
+            "platform": version.get("platform"),
+            "platform_description": version.get("platform_description"),
+            "studio_mode_enabled": studio_mode.get(
+                "studio_mode_enabled"
+            ),
+        },
+        "video": {
+            "base_resolution": (
+                f"{video.get('base_width')}x{video.get('base_height')}"
+                if video.get("base_width") is not None
+                and video.get("base_height") is not None
+                else None
+            ),
+            "output_resolution": (
+                f"{video.get('output_width')}x{video.get('output_height')}"
+                if video.get("output_width") is not None
+                and video.get("output_height") is not None
+                else None
+            ),
+            "fps": format_fps(video),
+            "fps_numerator": video.get("fps_numerator"),
+            "fps_denominator": video.get("fps_denominator"),
+        },
+        "stats": {
+            "active_fps": stats.get("active_fps"),
+            "cpu_usage": stats.get("cpu_usage"),
+            "memory_usage": stats.get("memory_usage"),
+            "available_disk_space": stats.get("available_disk_space"),
+            "render_skipped_frames": stats.get("render_skipped_frames"),
+            "render_total_frames": stats.get("render_total_frames"),
+            "output_skipped_frames": stats.get("output_skipped_frames"),
+            "output_total_frames": stats.get("output_total_frames"),
+            "average_frame_render_time": stats.get(
+                "average_frame_render_time"
+            ),
+        },
+    }
 
 
 def parse_args():
@@ -73,6 +150,21 @@ def parse_args():
         help="password ($OBS_API_PASSWORD)",
     )
     parser.add_argument("-j", "--json", action="store_true", default=False)
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--pretty",
+        action="store_true",
+        default=False,
+        help="Pretty panel-based output for human-readable commands",
+    )
+    output_group.add_argument(
+        "--table",
+        "--tsv",
+        dest="table",
+        action="store_true",
+        default=False,
+        help="Force the existing table output",
+    )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -83,6 +175,20 @@ def parse_args():
         add_help=False, argument_default=argparse.SUPPRESS
     )
     _common.add_argument("-j", "--json", action="store_true")
+    output_group = _common.add_mutually_exclusive_group()
+    output_group.add_argument("--pretty", action="store_true")
+    output_group.add_argument(
+        "--table",
+        "--tsv",
+        dest="table",
+        action="store_true",
+    )
+
+    subparsers.add_parser(
+        "info",
+        parents=[_common],
+        formatter_class=RichHelpFormatter,
+    )
 
     scene_parser = subparsers.add_parser(
         "scene",
@@ -698,6 +804,59 @@ def make_table(*headers):
     return table
 
 
+def format_info_value(value, suffix=None):
+    if value is None:
+        return _NA
+
+    if isinstance(value, bool):
+        if value:
+            return Text("enabled", style="bold green")
+        return Text("disabled", style="bold red")
+
+    if isinstance(value, float):
+        value = f"{value:.2f}".rstrip("0").rstrip(".")
+
+    if isinstance(value, Text):
+        return value
+
+    text = str(value)
+    if suffix:
+        text = f"{text} {suffix}"
+    return Text(text)
+
+
+def make_info_panel(title, rows, border_style):
+    table = Table.grid(expand=True)
+    table.add_column(style="cyan", no_wrap=True)
+    table.add_column(style="white")
+
+    for key, value, *rest in rows:
+        suffix = rest[0] if rest else None
+        table.add_row(key, format_info_value(value, suffix=suffix))
+
+    return Panel(
+        table,
+        title=title,
+        border_style=border_style,
+        padding=(0, 1),
+    )
+
+
+def use_pretty_output(args):
+    return bool(getattr(args, "pretty", False)) and not args.json
+
+
+def render_pretty_panels(console, panels):
+    if not panels:
+        return
+    console.print(Columns(panels, expand=True, equal=True))
+
+
+def render_pretty_hotkeys(console, hotkeys):
+    rows = tuple((str(index + 1), hotkey) for index, hotkey in enumerate(hotkeys))
+    console.print(make_info_panel("Hotkeys", rows, "yellow"))
+
+
 def print_error(console, message):
     console.print(f"[bold red]ERROR:[/bold red] {message}")
 
@@ -728,7 +887,159 @@ def main():
             "sources": "source",
         }
         cmd = _aliases.get(args.command, args.command)
-        if cmd == "scene":
+        if cmd == "info":
+            data = get_obs_info(cl)
+            if args.json:
+                print_json(data=data)
+                return
+
+            if use_pretty_output(args):
+                obs_panel = make_info_panel(
+                    "OBS Studio",
+                    (
+                        ("version", data["obs"].get("version")),
+                        (
+                            "websocket",
+                            data["obs"].get("websocket_version"),
+                        ),
+                        ("rpc", data["obs"].get("rpc_version")),
+                        ("platform", data["obs"].get("platform")),
+                        (
+                            "platform desc",
+                            data["obs"].get("platform_description"),
+                        ),
+                        (
+                            "studio mode",
+                            data["obs"].get("studio_mode_enabled"),
+                        ),
+                    ),
+                    "green",
+                )
+                video_panel = make_info_panel(
+                    "Video",
+                    (
+                        (
+                            "base res",
+                            data["video"].get("base_resolution"),
+                        ),
+                        (
+                            "output res",
+                            data["video"].get("output_resolution"),
+                        ),
+                        ("fps", data["video"].get("fps")),
+                        (
+                            "fps ratio",
+                            (
+                                f"{data['video'].get('fps_numerator')}/"
+                                f"{data['video'].get('fps_denominator')}"
+                            )
+                            if data["video"].get("fps_numerator") is not None
+                            and data["video"].get("fps_denominator")
+                            is not None
+                            else None,
+                        ),
+                    ),
+                    "cyan",
+                )
+                stats_panel = make_info_panel(
+                    "Runtime Stats",
+                    (
+                        ("active fps", data["stats"].get("active_fps")),
+                        ("cpu usage", data["stats"].get("cpu_usage"), "%"),
+                        ("memory", data["stats"].get("memory_usage"), "MB"),
+                        (
+                            "disk free",
+                            data["stats"].get("available_disk_space"),
+                            "GB",
+                        ),
+                        (
+                            "render skipped",
+                            data["stats"].get("render_skipped_frames"),
+                        ),
+                        (
+                            "render total",
+                            data["stats"].get("render_total_frames"),
+                        ),
+                        (
+                            "output skipped",
+                            data["stats"].get("output_skipped_frames"),
+                        ),
+                        (
+                            "output total",
+                            data["stats"].get("output_total_frames"),
+                        ),
+                        (
+                            "frame render",
+                            data["stats"].get("average_frame_render_time"),
+                            "ms",
+                        ),
+                    ),
+                    "magenta",
+                )
+                console.print(
+                    Columns((obs_panel, video_panel), expand=True)
+                )
+                console.print(stats_panel)
+                return
+
+            table = make_table("property", "value")
+            rows = (
+                ("obs version", data["obs"].get("version")),
+                (
+                    "websocket version",
+                    data["obs"].get("websocket_version"),
+                ),
+                ("rpc version", data["obs"].get("rpc_version")),
+                ("platform", data["obs"].get("platform")),
+                (
+                    "platform description",
+                    data["obs"].get("platform_description"),
+                ),
+                (
+                    "studio mode",
+                    str(data["obs"].get("studio_mode_enabled")).lower(),
+                ),
+                (
+                    "base resolution",
+                    data["video"].get("base_resolution"),
+                ),
+                (
+                    "output resolution",
+                    data["video"].get("output_resolution"),
+                ),
+                ("fps", data["video"].get("fps")),
+                ("active fps", data["stats"].get("active_fps")),
+                ("cpu usage", data["stats"].get("cpu_usage")),
+                ("memory usage", data["stats"].get("memory_usage")),
+                (
+                    "available disk space",
+                    data["stats"].get("available_disk_space"),
+                ),
+                (
+                    "render skipped frames",
+                    data["stats"].get("render_skipped_frames"),
+                ),
+                (
+                    "render total frames",
+                    data["stats"].get("render_total_frames"),
+                ),
+                (
+                    "output skipped frames",
+                    data["stats"].get("output_skipped_frames"),
+                ),
+                (
+                    "output total frames",
+                    data["stats"].get("output_total_frames"),
+                ),
+                (
+                    "avg frame render time",
+                    data["stats"].get("average_frame_render_time"),
+                ),
+            )
+            for key, value in rows:
+                table.add_row(key, _NA if value is None else str(value))
+            console.print(table)
+        elif cmd == "scene":
             if args.action == "current":
                 print(get_current_scene_name(cl))
             elif args.action == "list":
@@ -738,6 +1049,24 @@ def main():
                     print_json(data=res.scenes)
                     return
                 current = res.current_program_scene_name
+                if use_pretty_output(args):
+                    panels = []
+                    for sc in sorted(
+                        res.scenes, key=lambda x: x.get("sceneIndex")
+                    ):
+                        is_current = sc.get("sceneName") == current
+                        panels.append(
+                            make_info_panel(
+                                sc.get("sceneName"),
+                                (
+                                    ("index", sc.get("sceneIndex")),
+                                    ("current", is_current),
+                                ),
+                                "green" if is_current else "cyan",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
+                    return
                 table = make_table("index", "name", "current")
                 for sc in sorted(
                     res.scenes, key=lambda x: x.get("sceneIndex")
@@ -806,6 +1135,25 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
+                if use_pretty_output(args):
+                    panels = []
+                    for group in data:
+                        panels.append(
+                            make_info_panel(
+                                group.get("sourceName"),
+                                (
+                                    ("id", group.get("sceneItemId")),
+                                    ("scene", scene),
+                                    (
+                                        "enabled",
+                                        group.get("sceneItemEnabled"),
+                                    ),
+                                ),
+                                "magenta",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
+                    return
 
                 table = make_table("id", "name", "enabled")
                 for group in data:
@@ -831,6 +1179,29 @@ def main():
                 data = get_items(cl, args.scene)
                 if args.json:
                     print_json(data=data)
+                    return
+                if use_pretty_output(args):
+                    panels = []
+                    for item in data:
+                        group = (item.get("parentGroup") or {}).get(
+                            "sourceName"
+                        )
+                        panels.append(
+                            make_info_panel(
+                                item.get("sourceName"),
+                                (
+                                    ("id", item.get("sceneItemId")),
+                                    ("scene", scene),
+                                    ("group", group),
+                                    (
+                                        "enabled",
+                                        item.get("sceneItemEnabled"),
+                                    ),
+                                ),
+                                "blue",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
                     return
 
                 table = make_table("id", "group", "name", "enabled")
@@ -897,6 +1268,27 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
+                if use_pretty_output(args):
+                    panels = []
+                    for input in data:
+                        kind = input.get("inputKind")
+                        name = input.get("inputName")
+                        if kind in ["ffmpeg_source"] or "capture" in kind:
+                            muted = get_mute_state(cl, name)
+                        else:
+                            muted = None
+                        panels.append(
+                            make_info_panel(
+                                name,
+                                (
+                                    ("kind", kind),
+                                    ("muted", muted),
+                                ),
+                                "yellow",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
+                    return
 
                 table = make_table("kind", "name", "muted")
                 for input in data:
@@ -946,6 +1338,22 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
+                if use_pretty_output(args):
+                    panels = []
+                    for f in data:
+                        panels.append(
+                            make_info_panel(
+                                f.get("filterName"),
+                                (
+                                    ("input", args.INPUT),
+                                    ("kind", f.get("filterKind")),
+                                    ("enabled", f.get("filterEnabled")),
+                                ),
+                                "red",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
+                    return
                 table = make_table("kind", "name", "enabled")
                 for f in data:
                     table.add_row(
@@ -975,6 +1383,9 @@ def main():
                 if args.json:
                     print_json(data=data)
                     return
+                if use_pretty_output(args):
+                    render_pretty_hotkeys(console, data)
+                    return
                 table = make_table("name")
                 for hk in data:
                     table.add_row(hk)
@@ -988,6 +1399,18 @@ def main():
                 data = get_inputs(cl)
                 if args.json:
                     print_json(data=data)
+                    return
+                if use_pretty_output(args):
+                    panels = []
+                    for src in data:
+                        panels.append(
+                            make_info_panel(
+                                src.get("inputName"),
+                                (("kind", src.get("inputKind")),),
+                                "white",
+                            )
+                        )
+                    render_pretty_panels(console, panels)
                     return
                 table = make_table("kind", "name")
                 for src in data:

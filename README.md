@@ -31,15 +31,18 @@ obs-cli --help
 obs-cli --version
 ```
 
-Global flags (`-H`, `-P`, `-p`, `-j`, `-q`, `-D`, `-V`) can be placed before or
-after the subcommand name. Subcommands also accept plural forms (`scenes`,
-`items`, `groups`, etc.) and default to `list` (or `status` for stateful
-commands) when no action is given.
+Global flags (`-H`, `-P`, `-p`, `-j`, `-q`, `-D`, `-V`, `--pretty`,
+`--table`/`--tsv`) can be placed before or after the subcommand name.
+Subcommands also accept plural forms (`scenes`, `items`, `groups`, etc.) and
+default to `list` (or `status` for stateful commands) when no action is given.
 
 ```shell
 obs-cli scenes               # same as: obs-cli scene list
 obs-cli items --json         # JSON output
 obs-cli --json scene list    # equivalent
+obs-cli info                 # OBS Studio / websocket / video info
+obs-cli --pretty info        # panel-based pretty output
+obs-cli scene list --pretty
 ```
 
 ## 🌟 Features
