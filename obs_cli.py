@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sys
+from importlib import metadata
 
 import obsws_python as obs
 from rich import print, print_json
@@ -17,10 +18,40 @@ from rich.text import Text
 from rich_argparse import RichHelpFormatter
 
 
+def get_version():
+    pyproject = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "pyproject.toml",
+    )
+
+    try:
+        with open(pyproject, encoding="utf-8") as f:
+            match = re.search(
+                r'^version = "([^"]+)"$',
+                f.read(),
+                re.MULTILINE,
+            )
+        if match:
+            return match.group(1)
+    except FileNotFoundError:
+        pass
+
+    try:
+        return metadata.version("obs-cli")
+    except metadata.PackageNotFoundError as exc:
+        raise RuntimeError("Could not determine obs-cli version") from exc
+
+
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=RichHelpFormatter)
     parser.add_argument("-D", "--debug", action="store_true", default=False)
     parser.add_argument("-q", "--quiet", action="store_true", default=False)
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=get_version(),
+    )
     parser.add_argument(
         "-H",
         "--host",

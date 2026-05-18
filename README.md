@@ -28,9 +28,10 @@ pip install --user obs-cli
 
 ```shell
 obs-cli --help
+obs-cli --version
 ```
 
-Global flags (`-H`, `-P`, `-p`, `-j`, `-q`, `-D`) can be placed before or
+Global flags (`-H`, `-P`, `-p`, `-j`, `-q`, `-D`, `-V`) can be placed before or
 after the subcommand name. Subcommands also accept plural forms (`scenes`,
 `items`, `groups`, etc.) and default to `list` (or `status` for stateful
 commands) when no action is given.
