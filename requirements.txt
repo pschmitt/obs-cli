@@ -1,7 +1,7 @@
 markdown-it-py>=4.0
 mdurl>=0.1.2
 obsws-python>=1.8.0
-Pygments>=2.0
+Pygments>=2.20.0
 rich>=13.0
 rich-argparse>=1.0
 tomli>=2.0
