@@ -4,5 +4,5 @@ obsws-python>=1.8.0
 Pygments>=2.20.0
 rich>=13.0
 rich-argparse>=1.0
-tomli>=2.0
+tomli>=2.4.1
 websocket-client>=1.9.0
