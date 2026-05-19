@@ -82,9 +82,7 @@ def get_obs_info(cl):
             "rpc_version": version.get("rpc_version"),
             "platform": version.get("platform"),
             "platform_description": version.get("platform_description"),
-            "studio_mode_enabled": studio_mode.get(
-                "studio_mode_enabled"
-            ),
+            "studio_mode_enabled": studio_mode.get("studio_mode_enabled"),
         },
         "video": {
             "base_resolution": (
@@ -481,11 +479,7 @@ def switch_to_scene(cl, scene, exact=False, ignorecase=True):
         raise ValueError("Missing scene name")
 
     regex = re.compile(
-        (
-            f"^{re.escape(scene)}$"
-            if exact
-            else re.escape(scene)
-        ),
+        (f"^{re.escape(scene)}$" if exact else re.escape(scene)),
         re.IGNORECASE if ignorecase else re.NOFLAG,
     )
     scene_names = get_scene_names(cl)
@@ -494,9 +488,7 @@ def switch_to_scene(cl, scene, exact=False, ignorecase=True):
             cl.set_current_program_scene(scene_name)
             return True
 
-    available_scenes = "\n".join(
-        f"  - '{name}'" for name in scene_names
-    )
+    available_scenes = "\n".join(f"  - '{name}'" for name in scene_names)
     raise ObsSceneNotFoundException(
         f"Scene not found: '{scene}'\nAvailable scenes:\n{available_scenes}"
     )
@@ -853,7 +845,9 @@ def render_pretty_panels(console, panels):
 
 
 def render_pretty_hotkeys(console, hotkeys):
-    rows = tuple((str(index + 1), hotkey) for index, hotkey in enumerate(hotkeys))
+    rows = tuple(
+        (str(index + 1), hotkey) for index, hotkey in enumerate(hotkeys)
+    )
     console.print(make_info_panel("Hotkeys", rows, "yellow"))
 
 
@@ -930,13 +924,16 @@ def main():
                         (
                             "fps ratio",
                             (
-                                f"{data['video'].get('fps_numerator')}/"
-                                f"{data['video'].get('fps_denominator')}"
-                            )
-                            if data["video"].get("fps_numerator") is not None
-                            and data["video"].get("fps_denominator")
-                            is not None
-                            else None,
+                                (
+                                    f"{data['video'].get('fps_numerator')}/"
+                                    f"{data['video'].get('fps_denominator')}"
+                                )
+                                if data["video"].get("fps_numerator")
+                                is not None
+                                and data["video"].get("fps_denominator")
+                                is not None
+                                else None
+                            ),
                         ),
                     ),
                     "cyan",
@@ -976,9 +973,7 @@ def main():
                     ),
                     "magenta",
                 )
-                console.print(
-                    Columns((obs_panel, video_panel), expand=True)
-                )
+                console.print(Columns((obs_panel, video_panel), expand=True))
                 console.print(stats_panel)
                 return
 
@@ -1460,21 +1455,23 @@ def main():
             elif args.action == "active":
                 active, showing = source_active(cl, args.SOURCE)
                 if args.json:
-                    print_json(
-                        data={"active": active, "showing": showing}
-                    )
+                    print_json(data={"active": active, "showing": showing})
                     return
                 if args.quiet:
                     sys.exit(0 if active else 1)
                 table = make_table("source", "active", "showing")
                 table.add_row(
                     args.SOURCE,
-                    Text("true", style="bold green")
-                    if active
-                    else Text("false", style="bright_black"),
-                    Text("true", style="bold green")
-                    if showing
-                    else Text("false", style="bright_black"),
+                    (
+                        Text("true", style="bold green")
+                        if active
+                        else Text("false", style="bright_black")
+                    ),
+                    (
+                        Text("true", style="bold green")
+                        if showing
+                        else Text("false", style="bright_black")
+                    ),
                 )
                 console.print(table)
 
