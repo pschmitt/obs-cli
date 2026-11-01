@@ -159,7 +159,7 @@ obs-cli input get "Mic/Aux"
 obs-cli input get "Webcam" device_id
 
 # Set a property
-obs-cli input set "Webcam" device_id /dev/v4l/by-id/usb-Elgato_Elgato_Facecam_FW52K1A04919-video-index0
+obs-cli input set "Webcam" device_id /dev/v4l/by-id/usb-CAMERA-video-index0
 
 # Mute / unmute / toggle
 obs-cli input mute "Mic/Aux"
