@@ -5,41 +5,17 @@ on:
     tags:
       - '*'
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Generate the changelog without creating a release.
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    uses: pschmitt/ci-workflows/.github/workflows/github-release.yaml@main
+    with:
+      dry-run: ${{ inputs.dry-run || false }}
     permissions:
       contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Generate Changelog
-        id: changelog
-        run: |-
-          current_tag=$(git describe --tags --abbrev=0)
-          previous_tag=$(git describe --tags --abbrev=0 "${current_tag}^")
-
-          if [[ -z "$previous_tag" ]]
-          then
-            previous_tag="$(git log --reverse --format="format:%H" | head -1)"
-          fi
-
-          changelog=$(git log "${previous_tag}..${current_tag}" \
-            --oneline --no-merges --pretty=format:"%h %s")
-
-          echo "changelog:"
-          echo "$changelog"
-
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
-          echo "$changelog" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v3
-        with:
-          body: ${{ steps.changelog.outputs.changelog }}
