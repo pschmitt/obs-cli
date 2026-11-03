@@ -1,0 +1,2 @@
+# Linux package builds run on nixbot.
+attribute = "packages.x86_64-linux"
