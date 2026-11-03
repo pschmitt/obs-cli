@@ -1,0 +1,23 @@
+name: Nix lint
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - "**.nix"
+      - "flake.lock"
+      - ".github/workflows/nix-lint.yaml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix:
+    uses: pschmitt/ci-workflows/.github/workflows/nix-lint.yaml@main
