@@ -1,6 +1,6 @@
 markdown-it-py>=4.2.0
 mdurl>=0.1.2
-obsws-python>=1.8.0
+obsws-python>=1.8.1
 Pygments>=2.21.0
 rich>=13.0
 rich-argparse>=1.0
